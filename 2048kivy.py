@@ -4,6 +4,13 @@ import argparse
 
 import kivy
 
+from players.expectimax_player import ExpectimaxPlayer
+from players.mcts_player import MCTSPlayer
+from players.minimax_player import MinimaxPlayer
+from players.player import PlayerFactory
+from players.random_player import CyclePlayer, RandomPlayer
+from players.user_player import KivyPlayer
+
 kivy.require("2.1.0")
 
 from kivy.config import Config
@@ -22,15 +29,6 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
 from grid2048 import Grid2048
-from player import (
-    CyclePlayer,
-    ExpectimaxPlayer,
-    KivyPlayer,
-    MCTSPlayer,
-    MinimaxPlayer,
-    PlayerFactory,
-    RandomPlayer,
-)
 
 player_factory = PlayerFactory()
 player_factory.register("user", KivyPlayer)

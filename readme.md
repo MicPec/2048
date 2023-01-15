@@ -51,6 +51,7 @@ or
 python ./2048kivy.py -- -p mcts -i 10 
 ```
 where `-i` is the interval between moves.
+You can also pause the game by pressing `space` key, and move step by step by pressing `enter` key.
 
 Also you can set the width and height of the grid:
 ```bash

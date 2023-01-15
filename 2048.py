@@ -2,15 +2,12 @@
 import argparse
 
 from grid2048 import Grid2048
-from player import (
-    CyclePlayer,
-    ExpectimaxPlayer,
-    MCTSPlayer,
-    MinimaxPlayer,
-    PlayerFactory,
-    RandomPlayer,
-    UserPlayer,
-)
+from players.expectimax_player import ExpectimaxPlayer
+from players.mcts_player import MCTSPlayer
+from players.minimax_player import MinimaxPlayer
+from players.player import PlayerFactory
+from players.random_player import CyclePlayer, RandomPlayer
+from players.user_player import UserPlayer
 
 WIDTH = 4
 HEIGHT = 4
