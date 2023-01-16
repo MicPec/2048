@@ -53,7 +53,7 @@ class AIPlayer(PlayerInterface):
         """Returns the number of empty cells in the grid.
         Values are normalized to be between 0 and 1."""
         return len(
-            [cell for row in grid._grid for cell in row if cell == 0]
+            [cell for row in grid.data for cell in row if cell == 0]
         ) / self.grid_size(grid)
 
     def monotonicity(self, grid):
@@ -62,7 +62,7 @@ class AIPlayer(PlayerInterface):
         either increasing, decreasing or equal in each row and column.
         For small values, result is small, so this affects the big values more."""
         score = 0
-        for row in grid._grid:
+        for row in grid.data:
             for i in range(len(row) - 1):
                 if (
                     row[i] == row[i + 1]
@@ -72,7 +72,7 @@ class AIPlayer(PlayerInterface):
                 ):
                     score += row[i]
 
-        for col in zip(*grid._grid):
+        for col in zip(*grid.data):
             for i in range(len(col) - 1):
                 if (
                     col[i] == col[i + 1]
@@ -101,12 +101,12 @@ class AIPlayer(PlayerInterface):
         That includes pairs with holes in between."""
         pairs_count = 0
         for col in range(grid.width):
-            tmp = [x for x in grid._grid[col] if x != 0]
+            tmp = [x for x in grid.data[col] if x != 0]
             for val in range(len(tmp) - 1):
                 if tmp[val] == tmp[val + 1]:
                     pairs_count += tmp[val]
         for row in range(grid.height):
-            tmp = [x for x in grid._grid[row] if x != 0]
+            tmp = [x for x in grid.data[row] if x != 0]
             for val in range(len(tmp) - 1):
                 if tmp[val] == tmp[val + 1]:
                     pairs_count += tmp[val]
@@ -118,7 +118,7 @@ class AIPlayer(PlayerInterface):
         the absolute difference between each tile and the max
         tile of its row. Higher values are better."""
         flatness_count = 0
-        for row in grid._grid:
+        for row in grid.data:
             for cell in row:
                 if cell != 0:
                     flatness_count += abs(cell - max(row))
@@ -185,20 +185,20 @@ class AIPlayer(PlayerInterface):
         """Returns the sum of the shifted grid."""
         shifted = 0
         for col in range(grid.width):
-            tmp = [x for x in grid._grid[col] if x != 0]
+            tmp = [x for x in grid.data[col] if x != 0]
             shifted += sum(grid.combine_tiles(tmp))
         for row in range(grid.height):
-            tmp = [x for x in grid._grid[row] if x != 0]
+            tmp = [x for x in grid.data[row] if x != 0]
             shifted += sum(grid.combine_tiles(tmp))
         return shifted
 
     def max_tile(self, grid):
         """Returns the maximum tile in the grid."""
-        return max(cell for row in grid._grid for cell in row)
+        return max(cell for row in grid.data for cell in row)
 
     def grid_sum(self, grid):
         """Returns the sum of all cells in the grid."""
-        return sum(cell for row in grid._grid for cell in row)
+        return sum(cell for row in grid.data for cell in row)
 
     def grid_size(self, grid):
         """Returns the number of cells in the grid."""
@@ -211,7 +211,7 @@ class AIPlayer(PlayerInterface):
     def values_mean(self, grid):
         """Returns the mean of all non-zero cells in the grid."""
         return self.grid_sum(grid) / len(
-            [cell for row in grid._grid for cell in row if cell != 0]
+            [cell for row in grid.data for cell in row if cell != 0]
         )
 
     # def grid_variance(self, grid):
@@ -219,7 +219,7 @@ class AIPlayer(PlayerInterface):
     #     Values are normalized to be between 0 and 1.
     #     Higher values mean a more even distribution of values."""
     #     mean = self.grid_mean(grid)
-    #     variance = sum((cell - mean) ** 2 for row in grid._grid for cell in row)
+    #     variance = sum((cell - mean) ** 2 for row in grid.data for cell in row)
     #     return 1000 / variance if variance != 0 else 0
 
 

@@ -28,7 +28,7 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
-from grid2048 import Grid2048
+from grid2048 import STATES, Grid2048
 
 player_factory = PlayerFactory()
 player_factory.register("user", KivyPlayer)
@@ -71,7 +71,7 @@ class Grid(GridLayout):
         self.padding = 10, 10, 10, 10
         self.game_board = Grid2048(self.cols, self.rows)
         self.player = player_factory.create(player, self.game_board)
-        # self.game_board._grid = [
+        # self.game_board.data = [
         #     [0, 2, 4, 8],
         #     [16, 32, 64, 128],
         #     [256, 512, 1024, 2048],
@@ -113,7 +113,7 @@ class Grid(GridLayout):
         # print(self.game_board)
 
     def play(self, **kwargs):
-        if self.game_board.state == self.game_board.STATES.RUNNING:
+        if self.game_board.state == STATES.RUNNING:
             return
         moved = self.player.play(**kwargs)
         if not moved and not self.game_board.no_moves() and player != "user":

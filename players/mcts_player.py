@@ -1,5 +1,6 @@
 """AI player using Expectimax algorithm"""
 from copy import deepcopy
+from math import sqrt
 from random import choice
 
 from grid2048 import Grid2048
@@ -55,19 +56,21 @@ class MCTSPlayer(AIPlayer):
     def evaluate(self, grid):
         """Return the score of the grid"""
         maxi = self.max_tile(grid)
+        high_val = (sqrt(maxi) - 2) ** 2 if maxi > 512 else 512
         val = [
             (0.01 * self.shifted_sum(grid) + 0.001 * grid.score) / 2,
-            # # 0.1 * self.grid_sum(grid),
-            0.6 * self.zeros(grid),
-            0.1 * self.pairs(grid),
-            # 1.25 / (self.smoothness(grid) + 1),
+            # 0.1 * self.grid_sum(grid),
+            0.5 * self.zeros(grid),
+            0.2 * self.pairs(grid),
+            1.25 / (self.smoothness(grid) + 1),
             # 0.01 * self.max_tile(grid),
             0.005 * self.zero_field(grid) * self.max_tile(grid),
             0.001 * self.monotonicity(grid),
             self.high_vals_on_edge(grid, 512),
+            # 1.0 * self.high_vals_on_edge(grid, high_val),
             # 0.75 * self.low_to_high(grid, maxi // 4),
         ]
-        # print(val)
+        print(val)
         return sum(val)
 
     def simulate(self, grid):

@@ -3,9 +3,10 @@ import itertools
 from copy import deepcopy
 from random import choice
 
+STATES = enum.Enum("STATE", "IDLE RUNNING")
+
 
 class Grid2048:
-    STATES = enum.Enum("STATE", "IDLE RUNNING")
     state = STATES.IDLE
 
     def __init__(self, width=4, height=4):
@@ -29,11 +30,28 @@ class Grid2048:
             s += "\n" + "-" * (l + 1) * self.width + "-\n"
         return s
 
+    def __repr__(self):
+        return f"Grid2048({self.width}, {self.height}): {self._grid}"
+
     def __getitem__(self, key):
         return self._grid[key]
 
     def __setitem__(self, key, value):
         self._grid[key] = value
+
+    @property
+    def data(self) -> list[list[int]]:
+        return self._grid
+
+    @data.setter
+    def data(self, value: list[list[int]]):
+        if not all(isinstance(row, list) for row in value):
+            raise TypeError("Grid data must be a list of lists")
+        if len(value) != self.height or len(value[0]) != self.width:
+            raise ValueError(
+                f"Invalid grid dimensions:{self.width}x{self.height} != {len(value)}x{len(value[0])}"
+            )
+        self._grid = value
 
     def reset(self) -> None:
         """Reset the grid"""
@@ -41,7 +59,7 @@ class Grid2048:
         self.score = 0
         self.moves = 0
         self.add_random_tile(self.get_empty_fields())
-        self.state = self.STATES.IDLE
+        self.state = STATES.IDLE
 
     def get_empty_fields(self) -> list[tuple[int, int]]:
         """Return a list of tuples containing the coordinates of empty fields"""
@@ -92,13 +110,13 @@ class Grid2048:
             if kwargs.get("add_tile", True):
                 self.add_random_tile(self.get_empty_fields())
             self.moves += 1
-            self.STATE = self.STATES.IDLE
+            self.state = STATES.IDLE
             return True
-        self.STATE = self.STATES.IDLE
+        self.state = STATES.IDLE
         return False
 
     def shift_up(self, *args, **kwargs) -> bool:
-        self.STATE = self.STATES.RUNNING
+        self.state = STATES.RUNNING
         cmp = deepcopy(self._grid)
         for col in range(self.width):
             # Create a temporary list to store the non-zero tiles
@@ -117,7 +135,7 @@ class Grid2048:
         return bool(self.moved(cmp, *args, add_tile=True))
 
     def shift_down(self, *args, **kwargs) -> bool:
-        self.STATE = self.STATES.RUNNING
+        self.state = STATES.RUNNING
         cmp = deepcopy(self._grid)
         for col in range(self.width):
             # Create a temporary list to store the non-zero tiles
@@ -139,7 +157,7 @@ class Grid2048:
         return bool(self.moved(cmp, *args, add_tile=True))
 
     def shift_left(self, *args, **kwargs) -> bool:
-        self.STATE = self.STATES.RUNNING
+        self.state = STATES.RUNNING
         cmp = deepcopy(self._grid)
         for row in range(self.height):
             # Create a temporary list to store the non-zero tiles
@@ -157,7 +175,7 @@ class Grid2048:
         return bool(self.moved(cmp, *args, add_tile=True))
 
     def shift_right(self, *args, **kwargs) -> bool:
-        self.STATE = self.STATES.RUNNING
+        self.state = STATES.RUNNING
         cmp = deepcopy(self._grid)
         for row in range(self.height):
             # Create a temporary list to store the non-zero tiles
