@@ -1,6 +1,9 @@
 from enum import Enum
 import itertools
+from copy import deepcopy
 from random import choice
+from typing import Callable
+
 
 STATES = Enum("STATE", "IDLE RUNNING")
 MOVES = Enum("MOVES", "UP DOWN LEFT RIGHT")
@@ -95,12 +98,14 @@ class Grid2048:
                 return False
         return True
 
-        if move.is_vali
+    def move(self, move: Move, copy: bool = False) -> Grid2048:
+        if move.is_valid:
             self.score += move.score
             return move(copy)
 
 
-    def init__(self, grid: Grid2048, dir_fn: Callable):
+class Move:
+    def __init__(self, grid: Grid2048, dir_fn: Callable):
         self.score = 0
         self.dir_fn = dir_fn
         self._cached = deepcopy(grid)
@@ -212,9 +217,15 @@ class Grid2048:
 
 class MoveFactory:
     move_directions = {
+        "UP": lambda self, grid: Move.shift_up(self, grid),
+        "DOWN": lambda self, grid: Move.shift_down(self, grid),
+        "LEFT": lambda self, grid: Move.shift_left(self, grid),
+        "RIGHT": lambda self, grid: Move.shift_right(self, grid),
+    }
 
     def __init__(self, grid):
         self.grid = grid.data
 
     @classmethod
-    def create(cls, grid, direction: MOVES)
+    def create(cls, grid, direction: MOVES):
+        return Move(grid, cls.move_directions[direction.name])
