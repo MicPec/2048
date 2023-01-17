@@ -3,14 +3,13 @@ from copy import deepcopy
 from math import sqrt
 from random import choice
 
-from grid2048.grid2048 import Grid2048
+from grid2048.grid2048 import Grid2048, MOVES, MoveFactory
 from players.player import AIPlayer
 
 
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    dirs = ["l", "u", "d", "r"]
     max_depth = 20  # maximum depth to simulate
     n_sim = 30  # number of simulations to run for each move
 
@@ -18,47 +17,52 @@ class MCTSPlayer(AIPlayer):
         super().__init__(grid)
         self.height = self.grid.height
         self.width = self.grid.width
-        self.moves = {
-            "u": self.grid.shift_up,
-            "d": self.grid.shift_down,
-            "l": self.grid.shift_left,
-            "r": self.grid.shift_right,
-        }
 
     def play(self, *args, **kwargs) -> bool:
-        return self.moves[self.get_best_move(self.grid)]()
+        move = MoveFactory.create(self.grid, self.get_best_move(self.grid))
+        self.grid.move(move)
+        return move.is_valid
 
-    def get_best_move(self, grid):
+    def get_best_move(self, grid) -> MOVES:
         # Initialize a dictionary to store the number of wins for each move
-        wins = {"u": 0, "d": 0, "l": 0, "r": 0}
+        wins = {MOVES.UP: 0, MOVES.DOWN: 0, MOVES.LEFT: 0, MOVES.RIGHT: 0}
 
-        for move, _ in wins.items():
+        for direction, _ in wins.items():
             for _ in range(self.n_sim):
                 # Make a copy of the grid to simulate a move
                 sim_grid = deepcopy(grid)
-                if self.move(sim_grid, move, True):
+                move = MoveFactory.create(sim_grid, direction)
+                if move.is_valid:
+                    sim_grid = grid.move(move, copy=False)
                     result = self.simulate(sim_grid)
-                    wins[move] += result
-        return max(wins, key=wins.get)
+                    wins[direction] += result
+        w = max(wins, key=wins.get)
+        return w
 
-    def move(self, grid, direction, add_tile: bool = False):
-        moved = False
-        if direction == "u":
-            moved = grid.shift_up(add_tile=add_tile)
-        elif direction == "d":
-            moved = grid.shift_down(add_tile=add_tile)
-        elif direction == "l":
-            moved = grid.shift_left(add_tile=add_tile)
-        elif direction == "r":
-            moved = grid.shift_right(add_tile=add_tile)
-        return moved
+    def simulate(self, grid):
 
-    def evaluate(self, grid):
+        depth = 0
+        while depth < self.max_depth:
+            depth += 1
+            # select a random move
+            direction = choice(list(MOVES))
+            print("**************", direction, "**************")
+            move = MoveFactory.create(grid, direction)
+            # grid = grid.move(move, copy=False, add_tile=False)
+            move()
+            if not move.is_valid or grid.no_moves():
+                break
+        # return score
+        return self.evaluate(grid, move)
+
+    def evaluate(self, grid, move):
         """Return the score of the grid"""
         maxi = self.max_tile(grid)
         high_val = (sqrt(maxi) - 2) ** 2 if maxi > 512 else 512
+        score = move.score if move else 0
         val = [
-            (0.01 * self.shifted_sum(grid) + 0.001 * grid.score) / 2,
+            score,
+            (0.01 * self.grid_sum(grid) + 0.001 * grid.score) / 2,
             # 0.1 * self.grid_sum(grid),
             0.5 * self.zeros(grid),
             0.2 * self.pairs(grid),
@@ -67,21 +71,8 @@ class MCTSPlayer(AIPlayer):
             0.005 * self.zero_field(grid) * self.max_tile(grid),
             0.001 * self.monotonicity(grid),
             self.high_vals_on_edge(grid, 512),
-            # 1.0 * self.high_vals_on_edge(grid, high_val),
+            1.0 * self.high_vals_on_edge(grid, high_val),
             # 0.75 * self.low_to_high(grid, maxi // 4),
         ]
         print(val)
         return sum(val)
-
-    def simulate(self, grid):
-
-        depth = 0
-        while depth < self.max_depth:
-            depth += 1
-            # select a random move
-            move = choice(self.dirs)
-            moved = self.move(grid, move, False)
-            if not moved or grid.no_moves():
-                break
-        # return score
-        return self.evaluate(grid)

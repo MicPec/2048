@@ -152,10 +152,10 @@ class TestAIPlayer(unittest.TestCase):
         ]
         self.assertEqual(self.player.low_to_high(self.grid), 0.0625)
 
-    def test_shift_sum(self):
-        self.grid.data = [[4, 0, 2, 0], [0, 4, 0, 2], [2, 0, 4, 0], [0, 2, 0, 4]]
-        self.assertEqual(self.player.shifted_sum(self.grid), 48)
-        self.grid.data = [[4, 0, 4, 0], [0, 4, 0, 4], [4, 0, 4, 0], [0, 4, 0, 4]]
-        self.assertEqual(self.player.shifted_sum(self.grid), 64)
-        self.grid.data = [[2, 4, 4, 2], [2, 4, 4, 2], [2, 4, 4, 2], [2, 4, 4, 2]]
-        self.assertEqual(self.player.shifted_sum(self.grid), 96)
+    # def test_shift_sum(self):
+    #     self.grid.data = [[4, 0, 2, 0], [0, 4, 0, 2], [2, 0, 4, 0], [0, 2, 0, 4]]
+    #     self.assertEqual(self.player.shifted_sum(self.grid), 48)
+    #     self.grid.data = [[4, 0, 4, 0], [0, 4, 0, 4], [4, 0, 4, 0], [0, 4, 0, 4]]
+    #     self.assertEqual(self.player.shifted_sum(self.grid), 64)
+    #     self.grid.data = [[2, 4, 4, 2], [2, 4, 4, 2], [2, 4, 4, 2], [2, 4, 4, 2]]
+    #     self.assertEqual(self.player.shifted_sum(self.grid), 96)

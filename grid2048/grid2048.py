@@ -2,17 +2,21 @@ from enum import Enum
 import itertools
 from copy import deepcopy
 from random import choice
-from typing import Callable
+from typing import Callable, TypeVar
 
 
 STATES = Enum("STATE", "IDLE RUNNING")
 MOVES = Enum("MOVES", "UP DOWN LEFT RIGHT")
+
+Grid2048 = TypeVar("Grid2048")
+Move = TypeVar("Move")
 
 
 class Grid2048:
     state = STATES.IDLE
 
     def __init__(self, width=4, height=4):
+        self.last_move = None
         self.width = width
         self.height = height
         self.reset()
@@ -98,10 +102,15 @@ class Grid2048:
                 return False
         return True
 
-    def move(self, move: Move, copy: bool = False) -> Grid2048:
+    def move(self, move: Move, add_tile: bool = True, copy: bool = False) -> Grid2048:
+        self.score += move.score
         if move.is_valid:
-            self.score += move.score
-            return move(copy)
+            # self.last_move = move
+            self.moves += 1
+            # self._grid = move()
+            if add_tile:
+                self.add_random_tile(self.get_empty_fields())
+        return move(copy)
 
 
 class Move:
@@ -228,4 +237,9 @@ class MoveFactory:
 
     @classmethod
     def create(cls, grid, direction: MOVES):
-        return Move(grid, cls.move_directions[direction.name])
+        try:  # Check if the direction is valid
+            return Move(grid, cls.move_directions[direction.name])
+        except KeyError:
+            raise ValueError("Invalid direction")
+        except Exception as e:
+            raise e

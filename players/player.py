@@ -24,24 +24,24 @@ class AIPlayer(PlayerInterface):
     """Abstract base class for AI players"""
 
     @abstractmethod
-    def evaluate(self, grid):
+    def evaluate(self, grid, move):
         """Returns the score of the grid."""
         ...
 
-    def move(
-        self, grid, direction: str, add_tile: bool = False
-    ) -> tuple[Grid2048, bool]:
-        new_grid = deepcopy(grid)
-        moved = False
-        if direction == "u":
-            moved = new_grid.shift_up(add_tile=add_tile)
-        elif direction == "d":
-            moved = new_grid.shift_down(add_tile=add_tile)
-        elif direction == "l":
-            moved = new_grid.shift_left(add_tile=add_tile)
-        elif direction == "r":
-            moved = new_grid.shift_right(add_tile=add_tile)
-        return (new_grid, moved) if moved else (grid, False)
+    # def move(
+    #     self, grid, direction: str, add_tile: bool = False
+    # ) -> tuple[Grid2048, bool]:
+    #     new_grid = deepcopy(grid)
+    #     moved = False
+    #     if direction == "u":
+    #         moved = new_grid.shift_up(add_tile=add_tile)
+    #     elif direction == "d":
+    #         moved = new_grid.shift_down(add_tile=add_tile)
+    #     elif direction == "l":
+    #         moved = new_grid.shift_left(add_tile=add_tile)
+    #     elif direction == "r":
+    #         moved = new_grid.shift_right(add_tile=add_tile)
+    #     return (new_grid, moved) if moved else (grid, False)
 
     def normalize(self, values: list[any]) -> list[float]:
         """Normalize a list of numbers"""

@@ -71,7 +71,7 @@ class ExpectimaxPlayer(AIPlayer):
         """Return the score of the grid"""
         maxi = self.max_tile(grid)
         val = [
-            (0.01 * self.shifted_sum(grid) + 0.001 * grid.score) / 2,
+            (0.01 * self.shifted_points(grid) + 0.001 * grid.score) / 2,
             # # 0.1 * self.grid_sum(grid),
             0.6 * self.zeros(grid),
             0.1 * self.pairs(grid),
