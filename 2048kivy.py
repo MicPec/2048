@@ -28,7 +28,7 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
-from grid2048 import STATES, Grid2048
+from grid2048.grid2048 import STATES, Grid2048
 
 player_factory = PlayerFactory()
 player_factory.register("user", KivyPlayer)

@@ -3,7 +3,7 @@ import unittest
 from copy import deepcopy
 from unittest.mock import MagicMock
 
-from grid2048 import Grid2048
+from grid2048.grid2048 import Grid2048
 from players.player import AIPlayer
 
 

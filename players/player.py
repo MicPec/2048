@@ -4,7 +4,7 @@ from copy import deepcopy
 from itertools import product
 from typing import Callable
 
-from grid2048 import Grid2048
+from grid2048.grid2048 import Grid2048
 
 
 class PlayerInterface(ABC):

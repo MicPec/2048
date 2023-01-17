@@ -1,5 +1,5 @@
 import unittest
-from grid2048 import STATES, Grid2048
+from grid2048.grid2048 import STATES, Grid2048
 
 
 class TestGrid2048(unittest.TestCase):

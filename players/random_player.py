@@ -2,7 +2,7 @@
 from itertools import cycle
 from random import choices
 
-from grid2048 import Grid2048
+from grid2048.grid2048 import Grid2048
 from players.player import PlayerInterface
 
 

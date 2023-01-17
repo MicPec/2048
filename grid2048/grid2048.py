@@ -1,9 +1,9 @@
-import enum
+from enum import Enum
 import itertools
-from copy import deepcopy
 from random import choice
 
-STATES = enum.Enum("STATE", "IDLE RUNNING")
+STATES = Enum("STATE", "IDLE RUNNING")
+MOVES = Enum("MOVES", "UP DOWN LEFT RIGHT")
 
 
 class Grid2048:
@@ -38,6 +38,9 @@ class Grid2048:
 
     def __setitem__(self, key, value):
         self._grid[key] = value
+
+    def __eq__(self, other):
+        return self._grid == other._grid
 
     @property
     def data(self) -> list[list[int]]:
@@ -75,17 +78,6 @@ class Grid2048:
             row, col = choice(empty_fields)
             self._grid[row][col] = 2
 
-    def combine_tiles(self, temp: list[int]) -> list[int]:
-        """Combine the tiles and count the score"""
-        i = 0
-        while i < len(temp) - 1:
-            if temp[i] == temp[i + 1]:
-                temp[i] *= 2
-                temp.pop(i + 1)
-                self.score += temp[i]
-            i += 1
-        return temp
-
     def no_moves(self) -> bool:
         """Check if there are any moves left"""
         for col, row in itertools.product(range(self.width), range(self.height)):
@@ -103,95 +95,126 @@ class Grid2048:
                 return False
         return True
 
-    def moved(self, shifted: list[list[int]], *args, **kwargs) -> bool:
-        """Check if the grid has been shifted and add a new tile"""
-        if shifted != self._grid:
-            self._grid = deepcopy(shifted)
-            if kwargs.get("add_tile", True):
-                self.add_random_tile(self.get_empty_fields())
-            self.moves += 1
-            self.state = STATES.IDLE
-            return True
-        self.state = STATES.IDLE
-        return False
+        if move.is_vali
+            self.score += move.score
+            return move(copy)
 
-    def shift_up(self, *args, **kwargs) -> bool:
-        self.state = STATES.RUNNING
-        cmp = deepcopy(self._grid)
-        for col in range(self.width):
-            # Create a temporary list to store the non-zero tiles
-            temp = [cmp[row][col] for row in range(self.height) if cmp[row][col] != 0]
-            # Combine the tiles
-            temp = self.combine_tiles(temp)
 
-            # Rebuild the column
-            for i in range(self.height):
-                cmp[i][col] = 0
-            j = 0
-            for row in range(self.height):
-                if j < len(temp) and temp[j] != 0:
-                    cmp[row][col] = temp[j]
-                    j += 1
-        return bool(self.moved(cmp, *args, add_tile=True))
+    def init__(self, grid: Grid2048, dir_fn: Callable):
+        self.score = 0
+        self.dir_fn = dir_fn
+        self._cached = deepcopy(grid)
+        self._grid = self.dir_fn(self, grid)
 
-    def shift_down(self, *args, **kwargs) -> bool:
-        self.state = STATES.RUNNING
-        cmp = deepcopy(self._grid)
-        for col in range(self.width):
+    def __call__(self, copy: bool = False) -> Grid2048:
+        return self._grid if copy else deepcopy(self._grid)
+
+    @property
+    def is_valid(self) -> bool:
+        return self._grid != self._cached
+
+    def shift_up(self, grid: Grid2048) -> Grid2048:
+        matrix = grid.data
+        for col in range(len(matrix)):
             # Create a temporary list to store the non-zero tiles
             temp = [
-                cmp[row][col]
-                for row in range(self.height - 1, -1, -1)
-                if cmp[row][col] != 0
+                matrix[row][col]
+                for row in range(len(matrix[0]))
+                if matrix[row][col] != 0
             ]
             # Combine the tiles
-            temp = self.combine_tiles(temp)
+            self.score += self.combine_tiles(temp)
             # Rebuild the column
-            for k in range(self.height):
-                cmp[k][col] = 0
+            for i in range(len(matrix[0])):
+                matrix[i][col] = 0
             j = 0
-            for row in range(self.height - 1, -1, -1):
+            for row in range(len(matrix[0])):
                 if j < len(temp) and temp[j] != 0:
-                    cmp[row][col] = temp[j]
+                    matrix[row][col] = temp[j]
                     j += 1
-        return bool(self.moved(cmp, *args, add_tile=True))
+        return grid
 
-    def shift_left(self, *args, **kwargs) -> bool:
-        self.state = STATES.RUNNING
-        cmp = deepcopy(self._grid)
-        for row in range(self.height):
-            # Create a temporary list to store the non-zero tiles
-            temp = [cmp[row][col] for col in range(self.width) if cmp[row][col] != 0]
-            # Combine the tiles
-            temp = self.combine_tiles(temp)
-            # Rebuild the row
-            for k in range(self.width):
-                cmp[row][k] = 0
-            j = 0
-            for col in range(self.width):
-                if j < len(temp) and temp[j] != 0:
-                    cmp[row][col] = temp[j]
-                    j += 1
-        return bool(self.moved(cmp, *args, add_tile=True))
-
-    def shift_right(self, *args, **kwargs) -> bool:
-        self.state = STATES.RUNNING
-        cmp = deepcopy(self._grid)
-        for row in range(self.height):
+    def shift_down(self, grid: Grid2048) -> Grid2048:
+        matrix = grid.data
+        for col in range(len(matrix)):
             # Create a temporary list to store the non-zero tiles
             temp = [
-                cmp[row][col]
-                for col in range(self.width - 1, -1, -1)
-                if cmp[row][col] != 0
+                matrix[row][col]
+                for row in range(len(matrix[0]) - 1, -1, -1)
+                if matrix[row][col] != 0
             ]
             # Combine the tiles
-            temp = self.combine_tiles(temp)
-            # Rebuild the row
-            for k in range(self.width):
-                cmp[row][k] = 0
+            self.score += self.combine_tiles(temp)
+            # Rebuild the column
+            for k in range(len(matrix[0])):
+                matrix[k][col] = 0
             j = 0
-            for col in range(self.width - 1, -1, -1):
+            for row in range(len(matrix[0]) - 1, -1, -1):
                 if j < len(temp) and temp[j] != 0:
-                    cmp[row][col] = temp[j]
+                    matrix[row][col] = temp[j]
                     j += 1
-        return bool(self.moved(cmp, *args, add_tile=True))
+        return grid
+
+    def shift_left(self, grid: Grid2048) -> Grid2048:
+        matrix = grid.data
+        for row in range(len(matrix)):
+            # Create a temporary list to store the non-zero tiles
+            temp = [
+                matrix[row][col]
+                for col in range(len(matrix[0]))
+                if matrix[row][col] != 0
+            ]
+            # Combine the tiles
+            self.score += self.combine_tiles(temp)
+            # Rebuild the row
+            for k in range(len(matrix[0])):
+                matrix[row][k] = 0
+            j = 0
+            for col in range(len(matrix[0])):
+                if j < len(temp) and temp[j] != 0:
+                    matrix[row][col] = temp[j]
+                    j += 1
+        return grid
+
+    def shift_right(self, grid: Grid2048) -> Grid2048:
+        matrix = grid.data
+        for row in range(len(matrix)):
+            # Create a temporary list to store the non-zero tiles
+            temp = [
+                matrix[row][col]
+                for col in range(len(matrix[0]) - 1, -1, -1)
+                if matrix[row][col] != 0
+            ]
+            # Combine the tiles
+            self.score += self.combine_tiles(temp)
+            # Rebuild the row
+            for k in range(len(matrix[0])):
+                matrix[row][k] = 0
+            j = 0
+            for col in range(len(matrix[0]) - 1, -1, -1):
+                if j < len(temp) and temp[j] != 0:
+                    matrix[row][col] = temp[j]
+                    j += 1
+        return grid
+
+    def combine_tiles(self, temp: list[int]) -> int:
+        """Combine the tiles and count the score"""
+        i = 0
+        score = 0
+        while i < len(temp) - 1:
+            if temp[i] == temp[i + 1]:
+                temp[i] *= 2
+                temp.pop(i + 1)
+                score += temp[i]
+            i += 1
+        return score
+
+
+class MoveFactory:
+    move_directions = {
+
+    def __init__(self, grid):
+        self.grid = grid.data
+
+    @classmethod
+    def create(cls, grid, direction: MOVES)

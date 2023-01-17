@@ -1,5 +1,5 @@
 """User player class and kivy player class"""
-from grid2048 import Grid2048
+from grid2048.grid2048 import Grid2048, MOVES
 from players.player import PlayerInterface
 
 
@@ -11,10 +11,10 @@ class UserPlayer(PlayerInterface):
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
         self.moves = {
-            "u": self.grid.shift_up,
-            "d": self.grid.shift_down,
-            "l": self.grid.shift_left,
-            "r": self.grid.shift_right,
+            "u": MOVES.UP,
+            "d": MOVES.DOWN,
+            "l": MOVES.LEFT,
+            "r": MOVES.RIGHT,
         }
 
     def play(self, *args, **kwargs) -> bool:
