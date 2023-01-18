@@ -1,9 +1,8 @@
-from enum import Enum
 import itertools
 from copy import deepcopy
+from enum import Enum
 from random import choice
 from typing import Callable, TypeVar
-
 
 STATES = Enum("STATE", "IDLE RUNNING")
 MOVES = Enum("MOVES", "UP DOWN LEFT RIGHT")
@@ -114,7 +113,7 @@ class Grid2048:
             if add_tile:
                 self.add_random_tile(self.get_empty_fields())
         self.state = STATES.IDLE
-        return bool(move.is_valid)
+        return move.is_valid
 
 
 class Move:
@@ -125,7 +124,9 @@ class Move:
         self._is_valid = False
 
     def __call__(self, grid: Grid2048) -> Grid2048:
+        cmp = deepcopy(grid.data)
         self._grid = self.dir_fn(self, grid)
+        self._is_valid = self._grid.data != cmp
         return grid
 
     @property
@@ -153,7 +154,6 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
-                    self._is_valid = True
         return grid
 
     def shift_down(self, grid: Grid2048) -> Grid2048:
@@ -175,7 +175,6 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
-                    self._is_valid = True
         return grid
 
     def shift_left(self, grid: Grid2048) -> Grid2048:
@@ -197,7 +196,6 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
-                    self._is_valid = True
         return grid
 
     def shift_right(self, grid: Grid2048) -> Grid2048:
@@ -219,7 +217,6 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
-                    self._is_valid = True
         return grid
 
     def combine_tiles(self, temp: list[int]) -> int:
@@ -231,7 +228,6 @@ class Move:
                 temp[i] *= 2
                 temp.pop(i + 1)
                 score += temp[i]
-                self._is_valid = True
             i += 1
         return score
 

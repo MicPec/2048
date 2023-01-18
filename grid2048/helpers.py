@@ -150,7 +150,7 @@ def zero_field(grid):
     return field / ((grid.width - 1) * (grid.height - 1))
 
 
-def shifted_sum(grid):
+def shift_score(grid):
     """Returns the sum of the shifted grid."""
 
     def combine_tiles(temp: list[int]) -> int:
@@ -168,10 +168,10 @@ def shifted_sum(grid):
     shifted = 0
     for col in range(grid.width):
         tmp = [x for x in grid.data[col] if x != 0]
-        shifted += sum(combine_tiles(tmp))
+        shifted += combine_tiles(tmp)
     for row in range(grid.height):
         tmp = [x for x in grid.data[row] if x != 0]
-        shifted += sum(combine_tiles(tmp))
+        shifted += combine_tiles(tmp)
     return shifted
 
 
