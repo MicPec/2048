@@ -33,12 +33,8 @@ class MCTSPlayer(AIPlayer):
                 # Make a copy of the grid to simulate a move
                 sim_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
-                # print("*****", direction)
-                moved = sim_grid.move(move, add_tile=False)
-                if moved and not sim_grid.no_moves:
+                if sim_grid.move(move, add_tile=False):
                     wins[direction] += self.simulate(sim_grid)
-                # else:
-                #     break
         w = max(wins, key=wins.get)
         return w
 
@@ -50,7 +46,6 @@ class MCTSPlayer(AIPlayer):
             # select a random move
             direction = choice(list(MOVES))
             move = MoveFactory.create(direction)
-            # print("***", direction)
             moved = grid.move(move, add_tile=True)
             if not moved or grid.no_moves:
                 break
@@ -64,7 +59,7 @@ class MCTSPlayer(AIPlayer):
         score = move.score if move else 0
         val = [
             # 0.1 * score,
-            (0.01 * helpers.shifted_sum(grid) + 0.001 * grid.score) / 2,
+            (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
             # 0.1 * helpers.grid_sum(grid),
             0.5 * helpers.zeros(grid),
             0.2 * helpers.pairs(grid),

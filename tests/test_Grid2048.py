@@ -32,7 +32,7 @@ class TestGrid2048(unittest.TestCase):
 
     def test_score(self):
         grid = Grid2048(4, 4)
-        grid.data = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        grid.data = [[0 for _ in range(4)] for _ in range(4)]
         move = MoveFactory.create(MOVES.LEFT)
         grid.move(move)
         self.assertEqual(grid.score, 0)
@@ -57,19 +57,21 @@ class TestGrid2048(unittest.TestCase):
         grid.add_random_tile(empty_fields)
         self.assertNotEqual(grid.get_empty_fields(), empty_fields)
 
-    def test_no_moves(self):
+    def test_no_moves_true(self):
         grid = Grid2048(4, 4)
         self.assertFalse(grid.no_moves)
         for i in range(4):
             for j in range(4):
-                grid[i][j] = 2 ** (i + j)
+                # [[64,2,4,8],[2,4,8,16],[4,8,16,32],[8,16,32,64]]
+                grid[i][j] = 2 ** (i + j) if i + j > 0 else 64
         self.assertTrue(grid.no_moves)
 
-    def test_no_moves_2(self):
+    def test_no_moves_false(self):
         grid = Grid2048(4, 4)
         self.assertFalse(grid.no_moves)
         for i in range(4):
             for j in range(4):
+                # [[2,2,2,2],[4,4,4,4],[8,8,8,8],[16,16,16,16]
                 grid[i][j] = 2 ** (i + 1)
         self.assertFalse(grid.no_moves)
 

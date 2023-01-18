@@ -1,8 +1,9 @@
 """AI player using Expectimax algorithm"""
 from copy import deepcopy
-from random import shuffle
+from random import choice, shuffle
 
-from grid2048.grid2048 import Grid2048, MoveFactory, MOVES
+from grid2048 import helpers
+from grid2048.grid2048 import MOVES, Grid2048, MoveFactory
 from players.player import AIPlayer
 
 
@@ -10,7 +11,7 @@ class ExpectimaxPlayer(AIPlayer):
     """AI player using Expectimax algorithm""" ""
 
     # dirs = ["l", "u", "d", "r"]
-    depth = 3
+    depth = 5
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -53,9 +54,9 @@ class ExpectimaxPlayer(AIPlayer):
             for direction in MOVES:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
-                moved = new_grid.move(move, add_tile=False)
-                if not moved:
-                    continue
+                moved = new_grid.move(move, add_tile=True)
+                # if not moved:
+                #     continue
                 value = self.expectimax(new_grid, move, depth - 1, "random")
                 best_value = max(best_value, value)
             return best_value
@@ -64,26 +65,32 @@ class ExpectimaxPlayer(AIPlayer):
             values = []
             for direction in MOVES:
                 new_grid = deepcopy(grid)
-                new_grid.add_random_tile(new_grid.get_empty_fields())
+                # new_grid.add_random_tile(new_grid.get_empty_fields())
+                direction = choice(list(MOVES))
+                move = MoveFactory.create(direction)
+                moved = new_grid.move(move, add_tile=True)
+                # if not moved:
+                #     continue
                 values.append(self.expectimax(new_grid, None, depth - 1, "ai"))
             return sum(values) / len(values)
 
     def evaluate(self, grid, move=None):
         """Return the score of the grid"""
-        maxi = self.max_tile(grid)
-        score = move.score if move else 0
+        maxi = helpers.max_tile(grid)
+        move_score = move.score if move else 0
 
         val = [
-            score,
-            # (0.01 * self.grid_sum(grid) + 0.001 * grid.score) / 2,
-            # # 0.1 * self.grid_sum(grid),
-            0.6 * self.zeros(grid),
-            0.1 * self.pairs(grid),
-            # 1.25 / (self.smoothness(grid) + 1),
-            # 0.01 * self.max_tile(grid),
-            0.005 * self.zero_field(grid) * self.max_tile(grid),
-            0.001 * self.monotonicity(grid),
-            self.high_vals_on_edge(grid, 512),
+            0.1 * move_score,
+            # (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
+            # 0.1 * helpers.grid_sum(grid),
+            0.1 * grid.score,
+            0.4 * helpers.zeros(grid),
+            0.2 * helpers.pairs(grid),
+            # 1.25 / (helpers.smoothness(grid) + 1),
+            # 0.01 * helpers.max_tile(grid),
+            # 0.005 * helpers.zero_field(grid) * helpers.max_tile(grid),
+            0.001 * helpers.monotonicity(grid),
+            helpers.high_vals_on_edge(grid, 512),
         ]
         print(val)
         return sum(val)
