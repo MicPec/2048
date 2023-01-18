@@ -23,7 +23,7 @@ class UserPlayer(PlayerInterface):
             if direction in self.dirs:
                 break
             print("Invalid direction")
-        move = MoveFactory.create(self.grid, self.moves[direction])
+        move = MoveFactory.create(self.moves[direction])
         return self.grid.move(move)
 
 
@@ -47,5 +47,5 @@ class KivyPlayer(PlayerInterface):
             if direction in self.dirs:
                 break
             print("Invalid direction")
-        move = MoveFactory.create(self.grid, self.moves[direction])
+        move = MoveFactory.create(self.moves[direction])
         return self.grid.move(move)

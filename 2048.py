@@ -27,7 +27,7 @@ class Game:
         self.player = player_factory.create(player_type, self.grid)
 
     def game_over(self) -> bool:
-        return self.grid.no_moves()
+        return self.grid.no_moves
 
 
 def main() -> None:

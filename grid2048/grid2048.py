@@ -85,6 +85,7 @@ class Grid2048:
             row, col = choice(empty_fields)
             self._grid[row][col] = 2
 
+    @property
     def no_moves(self) -> bool:
         """Check if there are any moves left"""
         for col, row in itertools.product(range(self.width), range(self.height)):
@@ -102,30 +103,36 @@ class Grid2048:
                 return False
         return True
 
-    def move(self, move: Move, add_tile: bool = True, copy: bool = False) -> Grid2048:
+    def move(self, move: Move, add_tile: bool = True) -> bool:
+        if self.state == STATES.RUNNING or self.no_moves:
+            return False
+        self.state = STATES.RUNNING
+        move(self)
         self.score += move.score
         if move.is_valid:
-            # self.last_move = move
             self.moves += 1
-            # self._grid = move()
             if add_tile:
                 self.add_random_tile(self.get_empty_fields())
-        return move(copy)
+        self.state = STATES.IDLE
+        return bool(move.is_valid)
 
 
 class Move:
-    def __init__(self, grid: Grid2048, dir_fn: Callable):
+    def __init__(self, dir_fn: Callable):
         self.score = 0
         self.dir_fn = dir_fn
-        self._cached = deepcopy(grid)
-        self._grid = self.dir_fn(self, grid)
+        self._grid = None
+        self._is_valid = False
 
-    def __call__(self, copy: bool = False) -> Grid2048:
-        return self._grid if copy else deepcopy(self._grid)
+    def __call__(self, grid: Grid2048) -> Grid2048:
+        self._grid = self.dir_fn(self, grid)
+        return grid
 
     @property
     def is_valid(self) -> bool:
-        return self._grid != self._cached
+        if self._grid is None:
+            raise ValueError("Move has not been called yet")
+        return self._is_valid
 
     def shift_up(self, grid: Grid2048) -> Grid2048:
         matrix = grid.data
@@ -146,6 +153,7 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
+                    self._is_valid = True
         return grid
 
     def shift_down(self, grid: Grid2048) -> Grid2048:
@@ -167,6 +175,7 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
+                    self._is_valid = True
         return grid
 
     def shift_left(self, grid: Grid2048) -> Grid2048:
@@ -188,6 +197,7 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
+                    self._is_valid = True
         return grid
 
     def shift_right(self, grid: Grid2048) -> Grid2048:
@@ -209,6 +219,7 @@ class Move:
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
+                    self._is_valid = True
         return grid
 
     def combine_tiles(self, temp: list[int]) -> int:
@@ -220,25 +231,28 @@ class Move:
                 temp[i] *= 2
                 temp.pop(i + 1)
                 score += temp[i]
+                self._is_valid = True
             i += 1
         return score
 
 
 class MoveFactory:
+    """Factory class for creating Move objects"""
+
     move_directions = {
-        "UP": lambda self, grid: Move.shift_up(self, grid),
-        "DOWN": lambda self, grid: Move.shift_down(self, grid),
-        "LEFT": lambda self, grid: Move.shift_left(self, grid),
-        "RIGHT": lambda self, grid: Move.shift_right(self, grid),
+        "UP": Move.shift_up,
+        "DOWN": Move.shift_down,
+        "LEFT": Move.shift_left,
+        "RIGHT": Move.shift_right,
     }
 
     def __init__(self, grid):
         self.grid = grid.data
 
     @classmethod
-    def create(cls, grid, direction: MOVES):
-        try:  # Check if the direction is valid
-            return Move(grid, cls.move_directions[direction.name])
+    def create(cls, direction: MOVES):
+        try:
+            return Move(cls.move_directions[direction.name])
         except KeyError:
             raise ValueError("Invalid direction")
         except Exception as e:

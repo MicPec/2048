@@ -108,16 +108,16 @@ class Grid(GridLayout):
         self.children.reverse()
         if self.parent:
             self.parent.update_score(self.game_board.score)
-            if self.game_board.no_moves():
+            if self.game_board.no_moves:
                 self.parent.game_over()
         # print(self.game_board)
 
     def play(self, **kwargs):
-        if self.game_board.state == STATES.RUNNING:
+        if self.game_board.state == STATES.RUNNING or self.game_board.no_moves:
             return
         moved = self.player.play(**kwargs)
-        if not moved and not self.game_board.no_moves() and player != "user":
-            self.play(**kwargs)
+        # if not moved and not self.game_board.no_moves and player != "user":
+        #     self.play(**kwargs)
         self.update_widgets()
 
 
