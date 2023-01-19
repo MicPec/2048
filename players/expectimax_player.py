@@ -32,9 +32,9 @@ class ExpectimaxPlayer(AIPlayer):
             moved = new_grid.move(move, add_tile=True)
             if new_grid.no_moves:
                 return direction
+            value = self.expectimax(new_grid, move, self.depth, "ai")
             if not moved:
                 continue
-            value = self.expectimax(new_grid, move, self.depth, "ai")
             if value > best_value:
                 best_value = value
                 best_move = direction
@@ -59,8 +59,6 @@ class ExpectimaxPlayer(AIPlayer):
             values = []
             for direction in DIRECTION:
                 new_grid = deepcopy(grid)
-                # new_grid.add_random_tile(new_grid.get_empty_fields())
-                direction = choice(list(DIRECTION))
                 move = MoveFactory.create(direction)
                 moved = new_grid.move(move, add_tile=True)
                 # if not moved:
@@ -72,18 +70,19 @@ class ExpectimaxPlayer(AIPlayer):
         """Return the score of the grid"""
         maxi = helpers.max_tile(grid)
         move_score = move.score if move else 0
-        high_val = (sqrt(maxi) - 2) ** 2 if maxi > 512 else 512
+        high_val = (sqrt(maxi) - 3) ** 2 if maxi > 512 else 512
 
         val = [
-            0.1 * move_score,
+            1 * move_score,
             # (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
             # 0.1 * helpers.grid_sum(grid),
-            0.01 * grid.score,
-            0.4 * helpers.zeros(grid),
-            0.2 * helpers.pairs(grid),
+            1 * grid.score,
+            32 * helpers.zeros(grid),
+            4 * helpers.pairs(grid) * helpers.high_to_low(grid, 8),
+            10 * helpers.low_to_high(grid, 64),
             # # 1.25 / (helpers.smoothness(grid) + 1),
             # # 0.01 * helpers.max_tile(grid),
-            # # 0.005 * helpers.zero_field(grid) * helpers.max_tile(grid),
+            0.1 * helpers.zero_field(grid) * high_val,
             0.1 * helpers.monotonicity(grid),
             10 * helpers.high_vals_on_edge(grid, high_val),
         ]
