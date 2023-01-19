@@ -60,7 +60,8 @@ def smoothness(grid):
 
 
 def pairs(grid):
-    """Returns the sum of the pairs in the grid.
+    """Returns the sum of the pairs in the grid
+    divided by the number of cells in the grid.
     That includes pairs with holes in between."""
     pairs_count = 0
     for col in range(grid.width):
@@ -80,7 +81,8 @@ def flatness(grid):
     """Returns the flatness of the grid.
     It works by iterating through the grid and adding
     the absolute difference between each tile and the max
-    tile of its row. Higher values are better."""
+    tile of its row. Divided by the number of cells in the grid.
+    Higher values are better."""
     flatness_count = 0
     for row in grid.data:
         for cell in row:
