@@ -76,15 +76,14 @@ class ExpectimaxPlayer(AIPlayer):
             1 * move_score,
             # (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
             # 0.1 * helpers.grid_sum(grid),
-            1 * grid.score,
-            32 * helpers.zeros(grid),
-            4 * helpers.pairs(grid) * helpers.high_to_low(grid, 8),
-            10 * helpers.low_to_high(grid, 64),
+            0.01 * grid.score,
+            0.8 * helpers.zeros(grid),
+            # 0.2 * helpers.pairs(grid),
             # # 1.25 / (helpers.smoothness(grid) + 1),
             # # 0.01 * helpers.max_tile(grid),
-            0.1 * helpers.zero_field(grid) * high_val,
-            0.1 * helpers.monotonicity(grid),
-            10 * helpers.high_vals_on_edge(grid, high_val),
+            # # 0.005 * helpers.zero_field(grid) * helpers.max_tile(grid),
+            # 0.05 * helpers.monotonicity(grid),
+            5 * helpers.high_vals_on_edge(grid, high_val),
         ]
         # print(val)
         return sum(val)
