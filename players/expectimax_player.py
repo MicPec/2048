@@ -86,5 +86,5 @@ class ExpectimaxPlayer(AIPlayer):
             0.1 * helpers.monotonicity(grid),
             10 * helpers.high_vals_on_edge(grid, high_val),
         ]
-        print(val)
+        # print(val)
         return sum(val)

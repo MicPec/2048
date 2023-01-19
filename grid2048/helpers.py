@@ -64,16 +64,19 @@ def pairs(grid):
     divided by the number of cells in the grid.
     That includes pairs with holes in between."""
     pairs_count = 0
-    for col in range(grid.width):
-        tmp = [x for x in grid.data[col] if x != 0]
-        for val in range(len(tmp) - 1):
-            if tmp[val] == tmp[val + 1]:
-                pairs_count += tmp[val]
-    for row in range(grid.height):
-        tmp = [x for x in grid.data[row] if x != 0]
-        for val in range(len(tmp) - 1):
-            if tmp[val] == tmp[val + 1]:
-                pairs_count += tmp[val]
+    for row in range(len(grid.data)):
+        for col in range(len(grid.data[0])):
+            if grid.data[row][col] != 0:
+                if (
+                    row + 1 < len(grid.data)
+                    and grid.data[row][col] == grid.data[row + 1][col]
+                ):
+                    pairs_count += grid.data[row][col]
+                if (
+                    col + 1 < len(grid.data[0])
+                    and grid.data[row][col] == grid.data[row][col + 1]
+                ):
+                    pairs_count += grid.data[row][col]
     return pairs_count / grid_size(grid)
 
 

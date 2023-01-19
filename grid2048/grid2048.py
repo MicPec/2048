@@ -144,20 +144,18 @@ class Move:
     def shift_up(self, grid: Grid2048) -> Grid2048:
         """Shift the grid up combining tiles"""
         matrix = grid.data
-        for col in range(len(matrix)):
+        for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
             temp = [
-                matrix[row][col]
-                for row in range(len(matrix[0]))
-                if matrix[row][col] != 0
+                matrix[row][col] for row in range(len(matrix)) if matrix[row][col] != 0
             ]
             # Combine the tiles
             self.score += self.combine_tiles(temp)
             # Rebuild the column
-            for i in range(len(matrix[0])):
+            for i in range(len(matrix)):
                 matrix[i][col] = 0
             j = 0
-            for row in range(len(matrix[0])):
+            for row in range(len(matrix)):
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1
@@ -166,20 +164,20 @@ class Move:
     def shift_down(self, grid: Grid2048) -> Grid2048:
         """Shift the grid down combining tiles"""
         matrix = grid.data
-        for col in range(len(matrix)):
+        for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
             temp = [
                 matrix[row][col]
-                for row in range(len(matrix[0]) - 1, -1, -1)
+                for row in range(len(matrix) - 1, -1, -1)
                 if matrix[row][col] != 0
             ]
             # Combine the tiles
             self.score += self.combine_tiles(temp)
             # Rebuild the column
-            for k in range(len(matrix[0])):
+            for k in range(len(matrix)):
                 matrix[k][col] = 0
             j = 0
-            for row in range(len(matrix[0]) - 1, -1, -1):
+            for row in range(len(matrix) - 1, -1, -1):
                 if j < len(temp) and temp[j] != 0:
                     matrix[row][col] = temp[j]
                     j += 1

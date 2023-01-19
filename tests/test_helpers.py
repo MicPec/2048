@@ -1,7 +1,22 @@
 import unittest
 
 from grid2048.grid2048 import Grid2048
-from grid2048.helpers import (*
+from grid2048.helpers import (
+    flatness,
+    grid_mean,
+    grid_sum,
+    high_to_low,
+    high_vals_on_edge,
+    low_to_high,
+    max_tile,
+    monotonicity,
+    normalize,
+    pairs,
+    smoothness,
+    values_mean,
+    zero_field,
+    zeros,
+)
 
 
 class TestHelpers(unittest.TestCase):
