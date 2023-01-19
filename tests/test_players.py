@@ -1,6 +1,6 @@
 import unittest
 
-from grid2048.grid2048 import Grid2048, MOVES
+from grid2048.grid2048 import Grid2048, DIRECTION
 from players.player import AIPlayer
 
 

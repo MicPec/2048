@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
+import os
 
+# os.environ["KIVY_NO_CONSOLELOG"] = "1"
+os.environ["KIVY_NO_ARGS"] = "1"
 import argparse
 
 import kivy
 
+from players.cycle_player import CyclePlayer
 from players.expectimax_player import ExpectimaxPlayer
 from players.mcts_player import MCTSPlayer
 from players.minimax_player import MinimaxPlayer
 from players.player import PlayerFactory
-from players.random_player import CyclePlayer, RandomPlayer
+from players.random_player import RandomPlayer
 from players.user_player import KivyPlayer
 
 kivy.require("2.1.0")
@@ -28,7 +32,7 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
-from grid2048.grid2048 import STATES, Grid2048
+from grid2048.grid2048 import STATE, Grid2048
 
 player_factory = PlayerFactory()
 player_factory.register("user", KivyPlayer)
@@ -113,12 +117,13 @@ class Grid(GridLayout):
         # print(self.game_board)
 
     def play(self, **kwargs):
-        if self.game_board.state == STATES.RUNNING or self.game_board.no_moves:
+        if self.game_board.state == STATE.RUNNING or self.game_board.no_moves:
             return
         moved = self.player.play(**kwargs)
         # if not moved and not self.game_board.no_moves and player != "user":
         #     self.play(**kwargs)
-        self.update_widgets()
+        if moved:
+            self.update_widgets()
 
 
 class Game2048(BoxLayout):
@@ -200,7 +205,9 @@ class Game2048App(App):
         width = args.cols or 4
         height = args.rows or 4
         player = args.player or "user"
-        print(f"Starting game with {width}x{height} grid and {player} player")
+        if player not in player_factory.container.keys():
+            raise ValueError(f"Invalid player type: {player!r}")
+        print(f"Starting game with {width}x{height} grid and {player!r} player")
         Window.size = width * 100, height * 100 + 80
         Window.clearcolor = (0.741, 0.678, 0.631, 1.0)
         Window.bind(on_key_down=self.key_pressed)

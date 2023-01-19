@@ -1,6 +1,6 @@
 import unittest
 
-from grid2048.grid2048 import MOVES, STATES, Grid2048, MoveFactory
+from grid2048.grid2048 import DIRECTION, STATE, Grid2048, MoveFactory
 
 
 class TestGrid2048(unittest.TestCase):
@@ -8,7 +8,7 @@ class TestGrid2048(unittest.TestCase):
         grid = Grid2048(4, 4)
         self.assertEqual(grid.width, 4)
         self.assertEqual(grid.height, 4)
-        self.assertEqual(grid.state, STATES.IDLE)
+        self.assertEqual(grid.state, STATE.IDLE)
 
     def test_str(self):
         grid = Grid2048(4, 4)
@@ -26,18 +26,18 @@ class TestGrid2048(unittest.TestCase):
     def test_reset(self):
         grid = Grid2048(4, 4)
         grid.reset()
-        self.assertEqual(grid.state, STATES.IDLE)
+        self.assertEqual(grid.state, STATE.IDLE)
         self.assertEqual(grid.score, 0)
         self.assertEqual(grid.moves, 0)
 
     def test_score(self):
         grid = Grid2048(4, 4)
         grid.data = [[0 for _ in range(4)] for _ in range(4)]
-        move = MoveFactory.create(MOVES.LEFT)
+        move = MoveFactory.create(DIRECTION.LEFT)
         grid.move(move)
         self.assertEqual(grid.score, 0)
         grid.data = [[2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2], [4, 0, 0, 4]]
-        move = MoveFactory.create(MOVES.LEFT)
+        move = MoveFactory.create(DIRECTION.LEFT)
         grid.move(move)
         self.assertEqual(grid.score, 20)
 

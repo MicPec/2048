@@ -2,11 +2,12 @@
 import argparse
 
 from grid2048.grid2048 import Grid2048
+from players.cycle_player import CyclePlayer
 from players.expectimax_player import ExpectimaxPlayer
 from players.mcts_player import MCTSPlayer
 from players.minimax_player import MinimaxPlayer
 from players.player import PlayerFactory
-from players.random_player import CyclePlayer, RandomPlayer
+from players.random_player import RandomPlayer
 from players.user_player import UserPlayer
 
 WIDTH = 4
@@ -40,6 +41,8 @@ def main() -> None:
     width = args.cols or 4
     height = args.rows or 4
     player = args.player or "user"
+    if player not in player_factory.container.keys():
+        raise ValueError(f"Invalid player type: {player!r}")
     print(f"Starting game with {width}x{height} grid and {player!r} player")
     # Start game
     game = Game(width, height, player)

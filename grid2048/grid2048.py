@@ -1,18 +1,20 @@
 import itertools
 from copy import deepcopy
 from enum import Enum
-from random import choice
+from random import choice, choices
 from typing import Callable, TypeVar
 
-STATES = Enum("STATE", "IDLE RUNNING")
-MOVES = Enum("MOVES", "UP DOWN LEFT RIGHT")
+STATE = Enum("STATE", "IDLE RUNNING")
+DIRECTION = Enum("DIRECTION", "UP DOWN LEFT RIGHT")
 
 Grid2048 = TypeVar("Grid2048")
 Move = TypeVar("Move")
 
 
 class Grid2048:
-    state = STATES.IDLE
+    """2048 grid class"""
+
+    state = STATE.IDLE
 
     def __init__(self, width=4, height=4):
         self.last_move = None
@@ -53,9 +55,9 @@ class Grid2048:
         return self._grid
 
     @data.setter
-    def data(self, value: list[list[int]]):
+    def data(self, value: list[list[int]]) -> None:
         if not all(isinstance(row, list) for row in value):
-            raise TypeError("Grid data must be a list of lists")
+            raise TypeError("Grid data must be a list of lists of integers")
         if len(value) != self.height or len(value[0]) != self.width:
             raise ValueError(
                 f"Invalid grid dimensions:{self.width}x{self.height} != {len(value)}x{len(value[0])}"
@@ -68,7 +70,7 @@ class Grid2048:
         self.score = 0
         self.moves = 0
         self.add_random_tile(self.get_empty_fields())
-        self.state = STATES.IDLE
+        self.state = STATE.IDLE
 
     def get_empty_fields(self) -> list[tuple[int, int]]:
         """Return a list of tuples containing the coordinates of empty fields"""
@@ -82,7 +84,7 @@ class Grid2048:
         """Add a random tile to the grid"""
         if empty_fields:
             row, col = choice(empty_fields)
-            self._grid[row][col] = 2
+            self._grid[row][col] = choices([2, 4], [0.9, 0.1])[0]
 
     @property
     def no_moves(self) -> bool:
@@ -103,16 +105,17 @@ class Grid2048:
         return True
 
     def move(self, move: Move, add_tile: bool = True) -> bool:
-        if self.state == STATES.RUNNING or self.no_moves:
+        """Execute a move and return True if the move is valid."""
+        if self.state == STATE.RUNNING or self.no_moves:
             return False
-        self.state = STATES.RUNNING
+        self.state = STATE.RUNNING
         move(self)
         self.score += move.score
         if move.is_valid:
             self.moves += 1
             if add_tile:
                 self.add_random_tile(self.get_empty_fields())
-        self.state = STATES.IDLE
+        self.state = STATE.IDLE
         return move.is_valid
 
 
@@ -124,18 +127,22 @@ class Move:
         self._is_valid = False
 
     def __call__(self, grid: Grid2048) -> Grid2048:
+        """Execute the move"""
         cmp = deepcopy(grid.data)
         self._grid = self.dir_fn(self, grid)
+        # It`s done this way, because I could not find a better/faster way to do it.
         self._is_valid = self._grid.data != cmp
         return grid
 
     @property
     def is_valid(self) -> bool:
+        """Return True if the move is valid. Call after the move has been executed."""
         if self._grid is None:
             raise ValueError("Move has not been called yet")
         return self._is_valid
 
     def shift_up(self, grid: Grid2048) -> Grid2048:
+        """Shift the grid up combining tiles"""
         matrix = grid.data
         for col in range(len(matrix)):
             # Create a temporary list to store the non-zero tiles
@@ -157,6 +164,7 @@ class Move:
         return grid
 
     def shift_down(self, grid: Grid2048) -> Grid2048:
+        """Shift the grid down combining tiles"""
         matrix = grid.data
         for col in range(len(matrix)):
             # Create a temporary list to store the non-zero tiles
@@ -178,6 +186,7 @@ class Move:
         return grid
 
     def shift_left(self, grid: Grid2048) -> Grid2048:
+        """Shift the grid left combining tiles"""
         matrix = grid.data
         for row in range(len(matrix)):
             # Create a temporary list to store the non-zero tiles
@@ -199,6 +208,7 @@ class Move:
         return grid
 
     def shift_right(self, grid: Grid2048) -> Grid2048:
+        """Shift the grid right combining tiles"""
         matrix = grid.data
         for row in range(len(matrix)):
             # Create a temporary list to store the non-zero tiles
@@ -246,7 +256,7 @@ class MoveFactory:
         self.grid = grid.data
 
     @classmethod
-    def create(cls, direction: MOVES):
+    def create(cls, direction: DIRECTION):
         try:
             return Move(cls.move_directions[direction.name])
         except KeyError:

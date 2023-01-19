@@ -3,8 +3,8 @@ from copy import deepcopy
 from math import sqrt
 from random import choice
 
-from grid2048.grid2048 import Grid2048, MOVES, MoveFactory
 from grid2048 import helpers
+from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 from players.player import AIPlayer
 
 
@@ -22,18 +22,22 @@ class MCTSPlayer(AIPlayer):
     def play(self, *args, **kwargs) -> bool:
         move = MoveFactory.create(self.get_best_move(self.grid))
         return self.grid.move(move)
-        # return move.is_valid
 
-    def get_best_move(self, grid) -> MOVES:
+    def get_best_move(self, grid) -> DIRECTION:
         # Initialize a dictionary to store the number of wins for each move
-        wins = {MOVES.UP: 0, MOVES.DOWN: 0, MOVES.LEFT: 0, MOVES.RIGHT: 0}
+        wins = {
+            DIRECTION.UP: 0,
+            DIRECTION.DOWN: 0,
+            DIRECTION.LEFT: 0,
+            DIRECTION.RIGHT: 0,
+        }
 
         for direction, _ in wins.items():
             for _ in range(self.n_sim):
                 # Make a copy of the grid to simulate a move
                 sim_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
-                if sim_grid.move(move, add_tile=False):
+                if sim_grid.move(move, add_tile=True):
                     wins[direction] += self.simulate(sim_grid)
         w = max(wins, key=wins.get)
         return w
@@ -44,12 +48,11 @@ class MCTSPlayer(AIPlayer):
         while depth < self.max_depth:
             depth += 1
             # select a random move
-            direction = choice(list(MOVES))
+            direction = choice(list(DIRECTION))
             move = MoveFactory.create(direction)
             moved = grid.move(move, add_tile=True)
             if not moved or grid.no_moves:
                 break
-        # return score
         return self.evaluate(grid, move)
 
     def evaluate(self, grid, move):

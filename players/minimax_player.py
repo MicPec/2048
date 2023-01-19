@@ -1,15 +1,16 @@
 """AI player using Minimax algorithm"""
 from copy import deepcopy
 from random import shuffle
+from grid2048 import helpers
 
-from grid2048.grid2048 import MOVES, Grid2048, MoveFactory
+from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 from players.player import AIPlayer
 
 
 class MinimaxPlayer(AIPlayer):
     """AI player using Minimax algorithm"""
 
-    depth = 3
+    depth = 5
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -23,7 +24,7 @@ class MinimaxPlayer(AIPlayer):
     def get_best_move(self, grid):
         best_score = float("-inf")
         best_move = None
-        for direction in MOVES:
+        for direction in DIRECTION:
             # new_grid, moved = self.move(grid, direction)
             new_grid = deepcopy(grid)
             move = MoveFactory.create(direction)
@@ -31,54 +32,58 @@ class MinimaxPlayer(AIPlayer):
             if new_grid.no_moves:
                 return direction
             if not moved:
-                break
-            score = self.minimax(new_grid, self.depth, True)
+                continue
+            score = self.minimax(new_grid, move, self.depth, True)
             if score > best_score:
                 best_score = score
                 best_move = direction
         return best_move
 
-    def minimax(self, grid, depth, maximizing):
+    def minimax(self, grid, move, depth, maximizing):
         if grid.no_moves or depth == 0:
-            return self.evaluate(grid)
+            return self.evaluate(grid, move)
         if maximizing:
             best_score = float("-inf")
-            for direction in MOVES:
+            for direction in DIRECTION:
                 # new_grid, moved = self.move(grid, direction, True)
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
                 moved = new_grid.move(move, add_tile=True)
                 if not moved:
-                    break
-                score = self.minimax(new_grid, depth - 1, False)
+                    continue
+                score = self.minimax(new_grid, move, depth - 1, False)
                 best_score = max(best_score, score)
         else:
             best_score = float("inf")
-            for direction in MOVES:
+            for direction in DIRECTION:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
                 moved = new_grid.move(move, add_tile=False)
                 if not moved:
-                    break
+                    continue
                 # new_grid = deepcopy(grid)
                 # new_grid.add_random_tile(new_grid.get_empty_fields())
-                score = self.minimax(new_grid, depth - 1, True)
+                score = self.minimax(new_grid, move, depth - 1, True)
                 best_score = min(best_score, score)
         return best_score
 
-    def evaluate(self, grid):
+    def evaluate(self, grid, move=None):
         """Return the score of the grid"""
-        maxi = self.max_tile(grid)
+        maxi = helpers.max_tile(grid)
+        score = move.score if move else 0
+
         val = [
-            (0.01 * self.grid_sum(grid) + 0.001 * grid.score) / 2,
-            # # 0.1 * self.grid_sum(grid),
-            0.6 * self.zeros(grid),
-            0.6 * self.pairs(grid),
-            # 1.25 / (self.smoothness(grid) + 1),
-            # 0.01 * self.max_tile(grid),
-            # 0.005 * self.zero_field(grid) * self.max_tile(grid),
-            # 0.001 * self.monotonicity(grid),
-            self.high_vals_on_edge(grid, 512),
+            # (0.01 * helpers.grid_sum(grid) + 0.001 * grid.score) / 2,
+            # 0.4 * score,
+            # 0.05 * helpers.grid_sum(grid),
+            0.01 * grid.score,
+            # 1.2 * helpers.zeros(grid),
+            # 1.0 * helpers.pairs(grid),
+            # 1.25 / (helpers.smoothness(grid) + 1),
+            # 0.01 * helpers.max_tile(grid),
+            # 0.005 * helpers.zero_field(grid) * helpers.max_tile(grid),
+            # 0.001 * helpers.monotonicity(grid),
+            # helpers.high_vals_on_edge(grid, 512),
         ]
         print(val)
         return sum(val)
