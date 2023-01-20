@@ -61,18 +61,18 @@ class MCTSPlayer(AIPlayer):
         high_val = (sqrt(maxi) - 2) ** 2 if maxi > 512 else 512
         score = grid.last_move.score
         val = [
-            # 0.1 * score,
-            (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
-            # 0.1 * helpers.grid_sum(grid),
-            0.5 * helpers.zeros(grid),
-            0.2 * helpers.pairs(grid),
-            1.25 / (helpers.smoothness(grid) + 1),
+            score,
+            # (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
+            helpers.grid_sum(grid),
+            8 * helpers.zeros(grid),
+            4 * helpers.pairs(grid),
+            4 / (helpers.smoothness(grid) + 1),
             # 0.01 * helpers.max_tile(grid),
-            0.005 * helpers.zero_field(grid) * helpers.max_tile(grid),
-            0.001 * helpers.monotonicity(grid),
-            helpers.high_vals_on_edge(grid, 512),
-            1.0 * helpers.high_vals_on_edge(grid, high_val),
-            # 0.75 * helpers.low_to_high(grid, maxi // 4),
+            helpers.zero_field(grid) * helpers.max_tile(grid),
+            0.1 * helpers.monotonicity(grid),
+            # helpers.high_vals_on_edge(grid, 512),
+            # helpers.high_vals_on_edge(grid, high_val),
+            # 4 * helpers.low_to_high(grid, maxi // 4),
         ]
-        # print(val)
+        print(val)
         return sum(val)
