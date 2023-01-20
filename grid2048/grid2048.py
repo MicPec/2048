@@ -17,7 +17,7 @@ class Grid2048:
     state = STATE.IDLE
 
     def __init__(self, width=4, height=4):
-        self.last_move = None
+        self._last_move = None
         self.width = width
         self.height = height
         self.reset()
@@ -53,6 +53,12 @@ class Grid2048:
     @property
     def data(self) -> list[list[int]]:
         return self._grid
+
+    @property
+    def last_move(self) -> Move:
+        if self._last_move is None:
+            raise ValueError("No move has been made yet")
+        return self._last_move
 
     @data.setter
     def data(self, value: list[list[int]]) -> None:
@@ -112,6 +118,7 @@ class Grid2048:
         move(self)
         self.score += move.score
         if move.is_valid:
+            self._last_move = move
             self.moves += 1
             if add_tile:
                 self.add_random_tile(self.get_empty_fields())
@@ -120,24 +127,31 @@ class Grid2048:
 
 
 class Move:
-    def __init__(self, dir_fn: Callable):
+    def __init__(self, direction, dir_fn: Callable):
+        self._direction = direction
         self.score = 0
         self.dir_fn = dir_fn
-        self._grid = None
+        self._called = False
         self._is_valid = False
 
     def __call__(self, grid: Grid2048) -> Grid2048:
         """Execute the move"""
         cmp = deepcopy(grid.data)
-        self._grid = self.dir_fn(self, grid)
+        self.dir_fn(self, grid)
+        self._called = True
         # It`s done this way, because I could not find a better/faster way to do it.
-        self._is_valid = self._grid.data != cmp
+        self._is_valid = grid.data != cmp
         return grid
+
+    @property
+    def direction(self) -> DIRECTION:
+        """Return the direction of the move"""
+        return self._direction
 
     @property
     def is_valid(self) -> bool:
         """Return True if the move is valid. Call after the move has been executed."""
-        if self._grid is None:
+        if not self._called:
             raise ValueError("Move has not been called yet")
         return self._is_valid
 
@@ -256,7 +270,7 @@ class MoveFactory:
     @classmethod
     def create(cls, direction: DIRECTION):
         try:
-            return Move(cls.move_directions[direction.name])
+            return Move(direction, cls.move_directions[direction.name])
         except KeyError:
             raise ValueError("Invalid direction")
         except Exception as e:

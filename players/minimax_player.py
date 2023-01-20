@@ -33,15 +33,15 @@ class MinimaxPlayer(AIPlayer):
                 return direction
             if not moved:
                 continue
-            score = self.minimax(new_grid, move, self.depth, True)
+            score = self.minimax(new_grid, self.depth, True)
             if score > best_score:
                 best_score = score
                 best_move = direction
         return best_move
 
-    def minimax(self, grid, move, depth, maximizing):
+    def minimax(self, grid, depth, maximizing):
         if grid.no_moves or depth == 0:
-            return self.evaluate(grid, move)
+            return self.evaluate(grid)
         if maximizing:
             best_score = float("-inf")
             for direction in DIRECTION:
@@ -51,7 +51,7 @@ class MinimaxPlayer(AIPlayer):
                 moved = new_grid.move(move, add_tile=True)
                 if not moved:
                     continue
-                score = self.minimax(new_grid, move, depth - 1, False)
+                score = self.minimax(new_grid, depth - 1, False)
                 best_score = max(best_score, score)
         else:
             best_score = float("inf")
@@ -63,20 +63,21 @@ class MinimaxPlayer(AIPlayer):
                     continue
                 # new_grid = deepcopy(grid)
                 # new_grid.add_random_tile(new_grid.get_empty_fields())
-                score = self.minimax(new_grid, move, depth - 1, True)
+                score = self.minimax(new_grid, depth - 1, True)
                 best_score = min(best_score, score)
         return best_score
 
-    def evaluate(self, grid, move=None):
+    def evaluate(self, grid):
         """Return the score of the grid"""
         maxi = helpers.max_tile(grid)
-        score = move.score if move else 0
+        score = grid.last_move.score
 
         val = [
             # (0.01 * helpers.grid_sum(grid) + 0.001 * grid.score) / 2,
             # 0.4 * score,
             # 0.05 * helpers.grid_sum(grid),
             0.01 * grid.score,
+            score
             # 1.2 * helpers.zeros(grid),
             # 1.0 * helpers.pairs(grid),
             # 1.25 / (helpers.smoothness(grid) + 1),

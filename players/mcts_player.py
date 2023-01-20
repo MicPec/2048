@@ -53,13 +53,13 @@ class MCTSPlayer(AIPlayer):
             moved = grid.move(move, add_tile=True)
             if not moved or grid.no_moves:
                 break
-        return self.evaluate(grid, move)
+        return self.evaluate(grid)
 
-    def evaluate(self, grid, move):
+    def evaluate(self, grid):
         """Return the score of the grid"""
         maxi = helpers.max_tile(grid)
         high_val = (sqrt(maxi) - 2) ** 2 if maxi > 512 else 512
-        score = move.score if move else 0
+        score = grid.last_move.score
         val = [
             # 0.1 * score,
             (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,

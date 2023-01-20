@@ -32,7 +32,7 @@ class ExpectimaxPlayer(AIPlayer):
             moved = new_grid.move(move, add_tile=True)
             if new_grid.no_moves:
                 return direction
-            value = self.expectimax(new_grid, move, self.depth, "ai")
+            value = self.expectimax(new_grid, self.depth, "ai")
             if not moved:
                 continue
             if value > best_value:
@@ -40,9 +40,9 @@ class ExpectimaxPlayer(AIPlayer):
                 best_move = direction
         return best_move
 
-    def expectimax(self, grid, move, depth, player):
+    def expectimax(self, grid, depth, player):
         if depth == 0 or grid.no_moves:
-            return self.evaluate(grid, move)
+            return self.evaluate(grid)
         if player == "ai":
             best_value = float("-inf")
             for direction in DIRECTION:
@@ -51,7 +51,7 @@ class ExpectimaxPlayer(AIPlayer):
                 moved = new_grid.move(move, add_tile=True)
                 # if not moved:
                 #     continue
-                value = self.expectimax(new_grid, move, depth - 1, "random")
+                value = self.expectimax(new_grid, depth - 1, "random")
                 best_value = max(best_value, value)
             return best_value
         else:
@@ -63,13 +63,13 @@ class ExpectimaxPlayer(AIPlayer):
                 moved = new_grid.move(move, add_tile=True)
                 # if not moved:
                 #     continue
-                values.append(self.expectimax(new_grid, move, depth - 1, "ai"))
+                values.append(self.expectimax(new_grid, depth - 1, "ai"))
             return sum(values) / len(values)
 
-    def evaluate(self, grid, move=None):
+    def evaluate(self, grid):
         """Return the score of the grid"""
         maxi = helpers.max_tile(grid)
-        move_score = move.score if move else 0
+        move_score = grid.last_move.score
         high_val = (sqrt(maxi) - 3) ** 2 if maxi > 512 else 512
 
         val = [
