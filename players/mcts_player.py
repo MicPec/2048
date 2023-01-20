@@ -11,8 +11,8 @@ from players.player import AIPlayer
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    max_depth = 20  # maximum depth to simulate
-    n_sim = 30  # number of simulations to run for each move
+    max_depth = 250  # maximum depth to simulate
+    n_sim = 50  # number of simulations to run for each move
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -58,21 +58,21 @@ class MCTSPlayer(AIPlayer):
     def evaluate(self, grid):
         """Return the score of the grid"""
         maxi = helpers.max_tile(grid)
-        high_val = (sqrt(maxi) - 2) ** 2 if maxi > 512 else 512
+        high_val = maxi // 4 if maxi > 256 else 256
         score = grid.last_move.score
         val = [
-            score,
+            0.5 * score,
             # (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
-            helpers.grid_sum(grid),
-            8 * helpers.zeros(grid),
-            4 * helpers.pairs(grid),
-            4 / (helpers.smoothness(grid) + 1),
+            0.1 * helpers.grid_sum(grid),
+            12 * helpers.zeros(grid),
+            0.2 * helpers.pairs(grid) * helpers.monotonicity(grid),
+            # 2 / (helpers.smoothness(grid) + 1),
             # 0.01 * helpers.max_tile(grid),
-            helpers.zero_field(grid) * helpers.max_tile(grid),
-            0.1 * helpers.monotonicity(grid),
-            # helpers.high_vals_on_edge(grid, 512),
-            # helpers.high_vals_on_edge(grid, high_val),
-            # 4 * helpers.low_to_high(grid, maxi // 4),
+            # helpers.zero_field(grid) * helpers.max_tile(grid),
+            # helpers.monotonicity(grid),
+            helpers.high_vals_on_edge(grid, 512),
+            # 2 * helpers.high_vals_on_edge(grid, high_val),
+            4 * helpers.low_to_high(grid, 256),
         ]
         print(val)
         return sum(val)

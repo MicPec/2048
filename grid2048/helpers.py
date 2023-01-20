@@ -129,7 +129,7 @@ def high_to_low(grid: Grid2048, divider=256) -> float:
     return ratio / (high_vals + low_vals)
 
 
-def low_to_high(grid: Grid2048, divider=256) -> float:
+def low_to_high(grid: Grid2048, divider: int = 256) -> float:
     """Returns the ratio beteen the low and high values in the grid.
     Values are normalized to be between 0 and 1."""
     high_vals = 0
