@@ -1,6 +1,8 @@
 """Helper functions for computing the score of a grid."""
 from itertools import product
 
+from grid2048.grid2048 import Grid2048
+
 
 def normalize(values: list[any]) -> list[float]:
     """Normalize a list of numbers"""
@@ -9,7 +11,7 @@ def normalize(values: list[any]) -> list[float]:
     return [(x - minval) / (maxval - minval) for x in values]
 
 
-def zeros(grid):
+def zeros(grid: Grid2048) -> float:
     """Returns the number of empty cells in the grid.
     Values are normalized to be between 0 and 1."""
     return len([cell for row in grid.data for cell in row if cell == 0]) / grid_size(
@@ -17,7 +19,7 @@ def zeros(grid):
     )
 
 
-def monotonicity(grid):
+def monotonicity(grid: Grid2048) -> float:
     """Returns the number of monotonic rows and columns in the grid.
     It shows how well the numbers are ordered,
     either increasing, decreasing or equal in each row and column.
@@ -45,7 +47,7 @@ def monotonicity(grid):
     return score / grid_size(grid)
 
 
-def smoothness(grid):
+def smoothness(grid: Grid2048) -> float:
     """Returns the smoothness of the grid.
     It works by iterating through the grid, and comparing each element
     with its neighbors, and adding the absolute difference between them.
@@ -59,7 +61,7 @@ def smoothness(grid):
     return 1 / smoothness_count if smoothness_count != 0 else 0
 
 
-def pairs(grid):
+def pairs(grid: Grid2048) -> float:
     """Returns the sum of the pairs in the grid
     divided by the number of cells in the grid.
     That includes pairs with holes in between."""
@@ -84,7 +86,7 @@ def pairs(grid):
     return pairs_count / grid_size(grid)
 
 
-def flatness(grid):
+def flatness(grid: Grid2048) -> float:
     """Returns the flatness of the grid.
     It works by iterating through the grid and adding
     the absolute difference between each tile and the max
@@ -98,7 +100,7 @@ def flatness(grid):
     return flatness_count / grid_size(grid)
 
 
-def high_vals_on_edge(grid, divider=256):
+def high_vals_on_edge(grid: Grid2048, divider=256) -> float:
     """Returns the number of high values that are on the edge the grid.
     Values are normalized to be between 0 and 1."""
     high_vals = 0
@@ -111,7 +113,7 @@ def high_vals_on_edge(grid, divider=256):
     return high_vals / ((2 * (grid.width - 1)) + (2 * (grid.height - 1)))
 
 
-def high_to_low(grid, divider=256) -> float:
+def high_to_low(grid: Grid2048, divider=256) -> float:
     """Returns the ratio beteen the high and low values in the grid.
     Values are normalized to be between 0 and 1."""
     high_vals = 0
@@ -127,7 +129,7 @@ def high_to_low(grid, divider=256) -> float:
     return ratio / (high_vals + low_vals)
 
 
-def low_to_high(grid, divider=256) -> float:
+def low_to_high(grid: Grid2048, divider=256) -> float:
     """Returns the ratio beteen the low and high values in the grid.
     Values are normalized to be between 0 and 1."""
     high_vals = 0
@@ -143,7 +145,7 @@ def low_to_high(grid, divider=256) -> float:
     return ratio / (high_vals + low_vals)
 
 
-def zero_field(grid):
+def zero_field(grid: Grid2048) -> float:
     """Returns the number of empty fields that are surrounded by empty fields.
     Values are normalized to be between 0 and 1."""
     field = 0
@@ -159,18 +161,18 @@ def zero_field(grid):
     return field / ((grid.width - 1) * (grid.height - 1))
 
 
-def shift_score(grid):
+def shift_score(grid: Grid2048) -> int:
     """Returns the sum of the shifted grid."""
 
-    def combine_tiles(temp: list[int]) -> int:
+    def combine_tiles(cell: list[int]) -> int:
         """Combine tiles subfunction."""
         i = 0
         score = 0
-        while i < len(temp) - 1:
-            if temp[i] == temp[i + 1]:
-                temp[i] *= 2
-                temp.pop(i + 1)
-                score += temp[i]
+        while i < len(cell) - 1:
+            if cell[i] == cell[i + 1]:
+                cell[i] *= 2
+                cell.pop(i + 1)
+                score += cell[i]
             i += 1
         return score
 
@@ -184,27 +186,27 @@ def shift_score(grid):
     return shifted
 
 
-def max_tile(grid):
+def max_tile(grid: Grid2048) -> int:
     """Returns the maximum tile in the grid."""
     return max(cell for row in grid.data for cell in row)
 
 
-def grid_sum(grid):
+def grid_sum(grid: Grid2048) -> int:
     """Returns the sum of all cells in the grid."""
     return sum(cell for row in grid.data for cell in row)
 
 
-def grid_size(grid):
+def grid_size(grid: Grid2048) -> int:
     """Returns the number of cells in the grid."""
     return grid.height * grid.width
 
 
-def grid_mean(grid):
+def grid_mean(grid: Grid2048) -> float:
     """Returns the mean of all cells in the grid."""
     return grid_sum(grid) / grid_size(grid)
 
 
-def values_mean(grid):
+def values_mean(grid: Grid2048) -> float:
     """Returns the mean of all non-zero cells in the grid."""
     return grid_sum(grid) / len(
         [cell for row in grid.data for cell in row if cell != 0]
