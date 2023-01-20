@@ -56,9 +56,9 @@ class TestHelpers(unittest.TestCase):
         grid.data = [[0 for _ in range(4)] for _ in range(4)]
         self.assertEqual(pairs(grid), 0)
         grid.data = [[2, 0, 2, 0], [0, 2, 0, 2], [2, 0, 2, 0], [0, 2, 0, 2]]
-        self.assertEqual(pairs(grid), 1)
-        grid.data = [[2, 0, 2, 4], [2, 4, 2, 0], [2, 4, 2, 0], [2, 0, 2, 4]]
         self.assertEqual(pairs(grid), 0.5)
+        grid.data = [[2, 0, 2, 4], [2, 4, 2, 0], [2, 4, 2, 0], [2, 0, 2, 4]]
+        self.assertEqual(pairs(grid), 1)
 
     def test_flatness(self):
         grid = Grid2048(4, 4)
