@@ -1,5 +1,5 @@
 """User player class and kivy player class"""
-from grid2048 import Grid2048
+from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 from players.player import PlayerInterface
 
 
@@ -11,10 +11,10 @@ class UserPlayer(PlayerInterface):
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
         self.moves = {
-            "u": self.grid.shift_up,
-            "d": self.grid.shift_down,
-            "l": self.grid.shift_left,
-            "r": self.grid.shift_right,
+            "u": DIRECTION.UP,
+            "d": DIRECTION.DOWN,
+            "l": DIRECTION.LEFT,
+            "r": DIRECTION.RIGHT,
         }
 
     def play(self, *args, **kwargs) -> bool:
@@ -23,7 +23,8 @@ class UserPlayer(PlayerInterface):
             if direction in self.dirs:
                 break
             print("Invalid direction")
-        return self.moves[direction]()
+        move = MoveFactory.create(self.moves[direction])
+        return self.grid.move(move)
 
 
 class KivyPlayer(PlayerInterface):
@@ -34,10 +35,10 @@ class KivyPlayer(PlayerInterface):
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
         self.moves = {
-            273: self.grid.shift_up,
-            274: self.grid.shift_down,
-            276: self.grid.shift_left,
-            275: self.grid.shift_right,
+            273: DIRECTION.UP,
+            274: DIRECTION.DOWN,
+            276: DIRECTION.LEFT,
+            275: DIRECTION.RIGHT,
         }
 
     def play(self, *args, **kwargs) -> bool:
@@ -46,4 +47,5 @@ class KivyPlayer(PlayerInterface):
             if direction in self.dirs:
                 break
             print("Invalid direction")
-        return self.moves[direction]()
+        move = MoveFactory.create(self.moves[direction])
+        return self.grid.move(move)
