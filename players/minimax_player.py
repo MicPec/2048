@@ -10,7 +10,7 @@ from players.player import AIPlayer
 class MinimaxPlayer(AIPlayer):
     """AI player using Minimax algorithm"""
 
-    depth = 5
+    depth = 4
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -61,7 +61,6 @@ class MinimaxPlayer(AIPlayer):
                 moved = new_grid.move(move, add_tile=False)
                 if not moved:
                     continue
-                # new_grid = deepcopy(grid)
                 # new_grid.add_random_tile(new_grid.get_empty_fields())
                 score = self.minimax(new_grid, depth - 1, True)
                 best_score = min(best_score, score)
@@ -69,22 +68,27 @@ class MinimaxPlayer(AIPlayer):
 
     def evaluate(self, grid):
         """Return the score of the grid"""
-        maxi = helpers.max_tile(grid)
-        score = grid.last_move.score
+        max_val = helpers.max_tile(grid)
+        move_score = grid.last_move.score
+        high_val = max_val // 4 if max_val > 512 else 512
+        val_mean = helpers.values_mean(grid)
 
         val = [
-            # (0.01 * helpers.grid_sum(grid) + 0.001 * grid.score) / 2,
-            # 0.4 * score,
-            # 0.05 * helpers.grid_sum(grid),
-            0.01 * grid.score,
-            score
-            # 1.2 * helpers.zeros(grid),
-            # 1.0 * helpers.pairs(grid),
-            # 1.25 / (helpers.smoothness(grid) + 1),
-            # 0.01 * helpers.max_tile(grid),
-            # 0.005 * helpers.zero_field(grid) * helpers.max_tile(grid),
-            # 0.001 * helpers.monotonicity(grid),
-            # helpers.high_vals_on_edge(grid, 512),
+            helpers.grid_sum(grid),
+            move_score,
+            # val_mean * helpers.count_vals_gte(grid, 128),
+            # val_mean / (helpers.count_vals_lte(grid, 16) + 1),
+            64 / (helpers.count_vals_lte(grid, 4) + 1),
+            48 / (helpers.count_vals_lte(grid, 8) + 1),
+            32 / (helpers.count_vals_lte(grid, 16) + 1),
+            24 / (helpers.count_vals_lte(grid, 32) + 1),
+            20 / (helpers.count_vals_lte(grid, 64) + 1),
+            16 / (helpers.count_vals_lte(grid, 128) + 1),
+            12 / (helpers.count_vals_lte(grid, 256) + 1),
+            8 / (helpers.count_vals_lte(grid, 512) + 1),
+            4 / (helpers.count_vals_lte(grid, 1024) + 1),
+            2 / (helpers.count_vals_lte(grid, 2048) + 1),
+            helpers.monotonicity(grid),
         ]
         print(val)
         return sum(val)
