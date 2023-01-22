@@ -12,11 +12,8 @@ def normalize(values: list[any]) -> list[float]:
 
 
 def zeros(grid: Grid2048) -> float:
-    """Returns the number of empty cells in the grid.
-    Values are normalized to be between 0 and 1."""
-    return len([cell for row in grid.data for cell in row if cell == 0]) / grid_size(
-        grid
-    )
+    """Returns the number of empty cells in the grid."""
+    return len([cell for row in grid.data for cell in row if cell == 0])
 
 
 def monotonicity(grid: Grid2048) -> float:
@@ -44,31 +41,34 @@ def monotonicity(grid: Grid2048) -> float:
                 and col[i] != 0
             ):
                 score += col[i]
-    return score / grid_size(grid)
+    return 1 / grid_size(grid) * score
 
 
 def smoothness(grid: Grid2048) -> float:
     """Returns the smoothness of the grid.
     It works by iterating through the grid, and comparing each element
-    with its neighbors, and adding the absolute difference between them.
-    Values are normalized to be between 0 and 1."""
+    with its neighbors, and adding the absolute difference between them."""
     smoothness_count = 0
     for i, j in product(range(grid.height - 1), range(grid.width - 1)):
         if grid[i][j] != grid[i + 1][j] and grid[i][j] != 0 and grid[i + 1][j] != 0:
             smoothness_count += abs(grid[i][j] - grid[i + 1][j])
         if grid[i][j] != grid[i][j + 1] and grid[i][j] != 0 and grid[i][j + 1] != 0:
             smoothness_count += abs(grid[i][j] - grid[i][j + 1])
-    return 1 / smoothness_count if smoothness_count != 0 else 0
+    return (grid_size(grid) / smoothness_count) if smoothness_count != 0 else 0
 
 
-def pairs(grid: Grid2048) -> float:
+def pairs(grid: Grid2048, values: list[int] = None) -> float:
     """Returns the sum of the pairs in the grid
     divided by the number of cells in the grid.
     That includes pairs with holes in between."""
+    if values is None:
+        values = [2**x for x in range(1, 16)]
     pairs_count = 0
     tmp = []
     for row in grid.data:
-        tmp.extend(row[i] for i in range(len(row) - 1) if row[i] != 0)
+        tmp.extend(
+            row[i] for i in range(len(row) - 1) if row[i] != 0 and row[i] in values
+        )
         for i in range(len(tmp) - 1):
             if tmp[i] == tmp[i + 1]:
                 pairs_count += tmp[i]
@@ -76,7 +76,7 @@ def pairs(grid: Grid2048) -> float:
 
     for col in zip(*grid.data):
         for i in range(len(col) - 1):
-            if col[i] != 0:
+            if col[i] != 0 and col[i] in values:
                 tmp.append(col[i])
         for i in range(len(tmp) - 1):
             if tmp[i] == tmp[i + 1]:
@@ -101,16 +101,35 @@ def flatness(grid: Grid2048) -> float:
 
 
 def high_vals_on_edge(grid: Grid2048, divider=256) -> float:
-    """Returns the number of high values that are on the edge the grid.
-    Values are normalized to be between 0 and 1."""
+    """Returns the sum of high values (greater or equal to divider)
+    that are on the edge the grid.
+    Result is divided by the number of cells in the grid."""
     high_vals = 0
     for i, j in product(range(grid.height), range(grid.width)):
         if grid[i][j] == 0:
             continue
         if grid[i][j] >= divider:
             if i == 0 or j == 0 or i == grid.height - 1 or j == grid.width - 1:
-                high_vals += 1
-    return high_vals / ((2 * (grid.width - 1)) + (2 * (grid.height - 1)))
+                high_vals += grid[i][j]
+    return high_vals / grid_size(grid)
+
+
+def higher_on_edge(grid: Grid2048) -> float:
+    """Returns the sum of the edge values that are higher than their neighbors inside the grid.
+    Result is divided by the number of cells in the grid."""
+    higher = 0
+    for i, j in product(range(grid.height), range(grid.width)):
+        if grid[i][j] == 0:
+            continue
+        if i == 0 and grid[i][j] > grid[i + 1][j]:
+            higher += grid[i][j]
+        if i == grid.height - 1 and grid[i][j] > grid[i - 1][j]:
+            higher += grid[i][j]
+        if j == 0 and grid[i][j] > grid[i][j + 1]:
+            higher += grid[i][j]
+        if j == grid.width - 1 and grid[i][j] > grid[i][j - 1]:
+            higher += grid[i][j]
+    return higher / grid_size(grid)
 
 
 def high_to_low(grid: Grid2048, divider=256) -> float:
@@ -145,9 +164,41 @@ def low_to_high(grid: Grid2048, divider: int = 256) -> float:
     return ratio / (high_vals + low_vals)
 
 
+def count_vals_eq(grid: Grid2048, eq: int) -> float:
+    """Returns the number of values equal to the given value."""
+    eq_vals = 0
+    for i, j in product(range(grid.height), range(grid.width)):
+        if grid[i][j] == 0:
+            continue
+        if grid[i][j] == eq:
+            eq_vals += 1
+    return eq_vals
+
+
+def count_vals_lte(grid: Grid2048, divider: int = 8) -> float:
+    """Returns the number of values lesser than or equal to the divider."""
+    lte_vals = 0
+    for i, j in product(range(grid.height), range(grid.width)):
+        if grid[i][j] == 0:
+            continue
+        if grid[i][j] <= divider:
+            lte_vals += 1
+    return lte_vals
+
+
+def count_vals_gte(grid: Grid2048, divider: int = 256) -> float:
+    """Returns the number of values greater than or equal to the divider."""
+    gte_vals = 0
+    for i, j in product(range(grid.height), range(grid.width)):
+        if grid[i][j] == 0:
+            continue
+        if grid[i][j] >= divider:
+            gte_vals += 1
+    return gte_vals
+
+
 def zero_field(grid: Grid2048) -> float:
-    """Returns the number of empty fields that are surrounded by empty fields.
-    Values are normalized to be between 0 and 1."""
+    """Returns the number of empty fields that are surrounded by empty fields."""
     field = 0
     for i, j in product(range(grid.height - 1), range(grid.width - 1)):
         if grid[i][j] != 0:
@@ -158,7 +209,7 @@ def zero_field(grid: Grid2048) -> float:
             or grid[i][j] == grid[i][j + 1] == grid[i + 1][j + 1]
         ):
             field += 1
-    return field / ((grid.width - 1) * (grid.height - 1))
+    return field
 
 
 def shift_score(grid: Grid2048) -> int:
