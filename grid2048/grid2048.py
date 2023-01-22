@@ -14,9 +14,8 @@ Move = TypeVar("Move")
 class Grid2048:
     """2048 grid class"""
 
-    state = STATE.IDLE
-
     def __init__(self, width=4, height=4):
+        self.state = STATE.IDLE
         self._last_move = None
         self.width = width
         self.height = height
@@ -116,9 +115,9 @@ class Grid2048:
             return False
         self.state = STATE.RUNNING
         move(self)
+        self._last_move = move
         self.score += move.score
         if move.is_valid:
-            self._last_move = move
             self.moves += 1
             if add_tile:
                 self.add_random_tile(self.get_empty_fields())
@@ -127,6 +126,8 @@ class Grid2048:
 
 
 class Move:
+    """Move class. Makes a move in a given direction."""
+
     def __init__(self, direction, dir_fn: Callable):
         self._direction = direction
         self.score = 0
