@@ -54,7 +54,7 @@ def smoothness(grid: Grid2048) -> float:
             smoothness_count += abs(grid[i][j] - grid[i + 1][j])
         if grid[i][j] != grid[i][j + 1] and grid[i][j] != 0 and grid[i][j + 1] != 0:
             smoothness_count += abs(grid[i][j] - grid[i][j + 1])
-    return (grid_size(grid) / smoothness_count) if smoothness_count != 0 else 0
+    return grid_size(grid) / smoothness_count * 10 if smoothness_count != 0 else 0
 
 
 def pairs(grid: Grid2048, values: list[int] = None) -> float:
