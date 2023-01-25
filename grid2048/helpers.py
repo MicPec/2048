@@ -1,7 +1,52 @@
 """Helper functions for computing the score of a grid."""
+from dataclasses import dataclass
 from itertools import product
 
 from grid2048.grid2048 import Grid2048
+
+
+@dataclass
+class Heuristic:
+    name: str
+    weight: float
+    value: float
+
+
+class Evaluator:
+    def __init__(self):
+        self.heuristics = {}
+
+    def register(self, name: str, weight: float):
+        self.heuristics[name] = Heuristic(name, weight, 0.0)
+
+    def __str__(self):
+        result = ""
+        for name, val in self.heuristics.items():
+            result += f"{name!r}: {val.value * val.weight:.2f} \n"
+        return result
+
+    def __setitem__(self, name: str, value: float):
+        if name not in self.heuristics:
+            self.register(name, 1.0)
+        self.heuristics[name].value = value
+
+    def __getitem__(self, name: str) -> float:
+        if name not in self.heuristics:
+            raise KeyError(f"Unknown heuristic: {name!r}")
+        return self.heuristics[name].value * self.heuristics[name].weight
+
+    def get_weight(self, name: str) -> float:
+        if name not in self.heuristics:
+            raise KeyError(f"Unknown heuristic: {name!r}")
+        return self.heuristics[name].weight
+
+    def set_weight(self, name: str, weight: float):
+        if name not in self.heuristics:
+            raise KeyError(f"Unknown heuristic: {name!r}")
+        self.heuristics[name].weight = weight
+
+    def evaluate(self) -> float:
+        return sum(val.value * val.weight for val in self.heuristics.values())
 
 
 def normalize(values: list[any]) -> list[float]:
@@ -25,9 +70,9 @@ def monotonicity(grid: Grid2048) -> float:
     for row in grid.data:
         for i in range(len(row) - 1):
             if (
-                row[i] == row[i + 1]
-                or row[i] == row[i + 1] * 2
+                row[i] == row[i + 1] * 2
                 or row[i] == row[i + 1] // 2
+                # or row[i] == row[i + 1]
                 and row[i] != 0
             ):
                 score += row[i]
@@ -35,9 +80,9 @@ def monotonicity(grid: Grid2048) -> float:
     for col in zip(*grid.data):
         for i in range(len(col) - 1):
             if (
-                col[i] == col[i + 1]
-                or col[i] == col[i + 1] * 2
+                col[i] == col[i + 1] * 2
                 or col[i] == col[i + 1] // 2
+                # or col[i] == col[i + 1]
                 and col[i] != 0
             ):
                 score += col[i]
@@ -47,14 +92,16 @@ def monotonicity(grid: Grid2048) -> float:
 def smoothness(grid: Grid2048) -> float:
     """Returns the smoothness of the grid.
     It works by iterating through the grid, and comparing each element
-    with its neighbors, and adding the absolute difference between them."""
+    with its neighbors, and adding the absolute difference between them.
+    In this case, the smaller the difference, the better, so final result
+    is square of the grid size divided by the smoothness."""
     smoothness_count = 0
     for i, j in product(range(grid.height - 1), range(grid.width - 1)):
         if grid[i][j] != grid[i + 1][j] and grid[i][j] != 0 and grid[i + 1][j] != 0:
             smoothness_count += abs(grid[i][j] - grid[i + 1][j])
         if grid[i][j] != grid[i][j + 1] and grid[i][j] != 0 and grid[i][j + 1] != 0:
             smoothness_count += abs(grid[i][j] - grid[i][j + 1])
-    return (grid_size(grid) / smoothness_count) if smoothness_count != 0 else 0
+    return (grid_size(grid) ** 2 / smoothness_count) if smoothness_count != 0 else 0
 
 
 def pairs(grid: Grid2048, values: list[int] = None) -> float:
@@ -112,6 +159,22 @@ def high_vals_on_edge(grid: Grid2048, divider=256) -> float:
             if i == 0 or j == 0 or i == grid.height - 1 or j == grid.width - 1:
                 high_vals += grid[i][j]
     return high_vals / grid_size(grid)
+
+
+def high_vals_in_corner(grid: Grid2048, divider=256) -> float:
+    """Returns the sum of high values (greater or equal to divider)
+    that are in the cornes of the grid.
+    Result is divided by the number of cells in the grid."""
+    corner_vals = 0
+    if grid[0][0] >= divider:
+        corner_vals += grid[0][0]
+    if grid[0][grid.width - 1] >= divider:
+        corner_vals += grid[0][grid.width - 1]
+    if grid[grid.height - 1][0] >= divider:
+        corner_vals += grid[grid.height - 1][0]
+    if grid[grid.height - 1][grid.width - 1] >= divider:
+        corner_vals += grid[grid.height - 1][grid.width - 1]
+    return corner_vals / grid_size(grid)
 
 
 def higher_on_edge(grid: Grid2048) -> float:
