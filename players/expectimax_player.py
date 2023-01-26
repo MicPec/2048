@@ -12,7 +12,7 @@ from players.player import AIPlayer
 class ExpectimaxPlayer(AIPlayer):
     """AI player using Expectimax algorithm""" ""
 
-    depth = 3
+    depth = 4
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -75,16 +75,16 @@ class ExpectimaxPlayer(AIPlayer):
             return sum(values) / len(values) if values else 0
 
     def register_heuristics(self):
-        self.evaluator.register("zeros", 0.45)
-        self.evaluator.register("pairs", 0.6)
-        self.evaluator.register("pairs2", 0.2)
-        self.evaluator.register("pairs3", 0.1)
-        self.evaluator.register("smoothness", 1)
-        self.evaluator.register("monotonicity", 0.2)
-        self.evaluator.register("high_vals_on_edge", 0.02)
-        self.evaluator.register("high_vals_in_corner", 0.2)
-        self.evaluator.register("higher_on_edge", 0.01)
-        self.evaluator.register("score", 0.2)
+        self.evaluator.register("zeros", 1.42)
+        self.evaluator.register("pairs", 0.29)
+        self.evaluator.register("pairs2", 1.15)
+        self.evaluator.register("pairs3", 1.05)
+        self.evaluator.register("smoothness", 0.38)
+        self.evaluator.register("monotonicity", 0.70)
+        self.evaluator.register("high_vals_on_edge", 0.7)
+        self.evaluator.register("high_vals_in_corner", 0.85)
+        self.evaluator.register("higher_on_edge", 2.37)
+        self.evaluator.register("score", 0.82)
 
     def evaluate(self, grid):
         """Return the score of the grid"""

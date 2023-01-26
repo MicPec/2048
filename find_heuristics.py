@@ -52,15 +52,15 @@ def objective_function(weights):
 
 
 def main() -> None:
-    num_games = 10
-    initial_weights = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    num_games = 100
+    initial_weights = [1.34, 0.68, 1.05, 0.97, 0.92, 0.73, 1.05, 1.1, 1.8, 0.65]
     sigma0 = 0.25
 
     res = cma.fmin(
         objective_function,
         initial_weights,
         sigma0,
-        options={"verbose": -9, "maxfevals": num_games},
+        options={"verbose": True, "maxfevals": num_games},
     )
 
     print(res[0])
