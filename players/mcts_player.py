@@ -11,15 +11,21 @@ from players.player import AIPlayer
 class Node:
     c = 1.41
 
-    def __init__(self, grid: Grid2048, direction: DIRECTION, parent=None):
+    def __init__(self, grid: Grid2048, direction: DIRECTION):
         self.grid = grid
         self.direction = direction
         self.visits = 1
         self.value = 0
-        self.parent = parent
+        self.parent = None
         self.children = []
 
+    def __str__(self):
+        s = f"Node(dir:{self.direction}, vis:{self.visits}, val:{self.value}), d:{self.depth}"
+        s += f"Children: {self.children}"
+        return s
+
     def add_child(self, child_node):
+        child_node.parent = self
         self.children.append(child_node)
 
     def update(self, value):
@@ -44,29 +50,21 @@ class Node:
             # else 0
         )
 
-    # @property  # added property to get the move associated with the node
-    # def move(
-    #     self,
-    # ):  # loop through children and return the move associated with the node
-    #     for move, child in self.children:
-    #         if child == self:
-    #             return move
-
 
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    max_depth = 100
-    n_sim = 300
-    c = 0.1
+    max_depth = 20
+    n_sim = 500
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
         self.height = self.grid.height
         self.width = self.grid.width
-        self.root = Node(grid, None)
+        self.root: Node
 
     def play(self, *args, **kwargs) -> bool:
+        self.root = Node(self.grid, None)
         move = MoveFactory.create(self.get_best_direction())
         return self.grid.move(move)
 
@@ -81,11 +79,12 @@ class MCTSPlayer(AIPlayer):
 
     def search(self, node):
         node = self.select(node)
-        if node.depth < self.max_depth:
+        if node.depth < self.max_depth and not node.grid.no_moves:
             child = self.expand(node)
             score = self.simulate(child)
         else:
             score = self.evaluate(node.grid)
+        print(node)
         self.backpropagate(node, score)
 
     def select(self, node):
@@ -94,25 +93,25 @@ class MCTSPlayer(AIPlayer):
         while node.children:
             best_child = max(node.children, key=lambda x: x.uct)
             node = best_child
+        # print(node)
         return node
 
     def expand(self, node: Node):
         """Expand the node by adding a new child"""
-        grid = deepcopy(node.grid)
-        while True:
-            direction = self.get_random_direction()
-            move = grid.move(MoveFactory.create(direction), add_tile=True)
-            if move or grid.no_moves:
-                break
-        child = Node(grid, direction, node)
-        node.add_child(child)
+        for direction in DIRECTION:
+            grid = deepcopy(node.grid)
+            moved = grid.move(MoveFactory.create(direction), add_tile=True)
+            if moved:  # if the move was valid
+                child = Node(grid, direction)
+                node.add_child(child)
+        child = choice(node.children)
         return child
 
     def simulate(self, node: Node):
         """Simulate the game from the node using a random playout policy"""
         grid = deepcopy(node.grid)
         while not grid.no_moves:
-            move = self.get_random_direction()
+            move = choice(list(DIRECTION))
             grid.move(MoveFactory.create(move), add_tile=True)
         return self.evaluate(grid)
 
@@ -120,19 +119,7 @@ class MCTSPlayer(AIPlayer):
         """Backpropagate the score to update the information in the tree"""
         while node:
             node.update(score)
-            # node.uct = node.score / node.visits + self.c * sqrt(
-            #     2 * log(node.parent.visits) / node.visits
-            # )
             node = node.parent
-
-    # def get_best_move(self):
-    #     """Return the move that corresponds to the child node with the highest UCT"""
-    #     return max(self.root.children, key=lambda x: x.uct).move
-
-    def get_random_direction(self):
-        """Return a random move from all possible moves"""
-        directions = list(DIRECTION)
-        return choice(directions)
 
     def evaluate(self, grid):
         """Return the score of the grid"""
@@ -140,16 +127,17 @@ class MCTSPlayer(AIPlayer):
         high_val = maxi // 4 if maxi > 256 else 256
         score = grid.last_move.score
         val = [
-            0.5 * score,
+            # 0.1 * score,
+            grid.score,
             # (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
             # 0.1 * helpers.grid_sum(grid),
-            2 * helpers.zeros(grid),
+            # 2 * helpers.zeros(grid),
             # 0.2 * helpers.pairs(grid) * helpers.monotonicity(grid),
             # # 2 / (helpers.smoothness(grid) + 1),
             # # 0.01 * helpers.max_tile(grid),
             # # helpers.zero_field(grid) * helpers.max_tile(grid),
             # helpers.monotonicity(grid),
-            helpers.higher_on_edge(grid),
+            # 0.1 * helpers.higher_on_edge(grid),
             # 2 * helpers.high_vals_on_edge(grid, high_val),
             # 4 * helpers.low_to_high(grid, 256),
         ]
