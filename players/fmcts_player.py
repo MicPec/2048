@@ -25,22 +25,16 @@ class MCTSPlayer(AIPlayer):
 
     def get_best_move(self, grid) -> DIRECTION:
         # Initialize a dictionary to store the number of wins for each move
-        wins = {
-            DIRECTION.UP: 0,
-            DIRECTION.DOWN: 0,
-            DIRECTION.LEFT: 0,
-            DIRECTION.RIGHT: 0,
-        }
+        wins = {direction: 0 for direction in DIRECTION}
 
-        for direction, _ in wins.items():
+        for direction in DIRECTION:
             for _ in range(self.n_sim):
                 # Make a copy of the grid to simulate a move
                 sim_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
                 if sim_grid.move(move, add_tile=True):
                     wins[direction] += self.simulate(sim_grid)
-        w = max(wins, key=wins.get)
-        return w
+        return max(wins, key=wins.get)
 
     def simulate(self, grid):
 

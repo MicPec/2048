@@ -1,8 +1,9 @@
 """Helper functions for computing the score of a grid."""
+from copy import deepcopy
 from dataclasses import dataclass
 from itertools import product
 
-from grid2048.grid2048 import Grid2048
+from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 
 
 @dataclass
@@ -47,6 +48,16 @@ class Evaluator:
 
     def evaluate(self) -> float:
         return sum(val.value * val.weight for val in self.heuristics.values())
+
+
+def get_valid_moves(grid: Grid2048) -> list[DIRECTION]:
+    """Return a list of grids with valid moves."""
+    valid = []
+    for direction in DIRECTION:
+        cmp = deepcopy(grid)
+        if cmp.move(MoveFactory.create(direction)):
+            valid.append(direction)
+    return valid
 
 
 def normalize(values: list[any]) -> list[float]:

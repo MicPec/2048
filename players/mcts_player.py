@@ -8,138 +8,140 @@ from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 from players.player import AIPlayer
 
 
-class Node:
+class MCTSNode:
     c = 1.41
 
     def __init__(self, grid: Grid2048, direction: DIRECTION):
-        self.grid = grid
         self.direction = direction
-        self.visits = 1
+        self.grid = grid
+        self.visits = 0
         self.value = 0
-        self.parent = None
+        self.parent: MCTSNode = None
         self.children = []
+        self.valid_moves = helpers.get_valid_moves(self.grid)
 
     def __str__(self):
-        s = f"Node(dir:{self.direction}, vis:{self.visits}, val:{self.value}), d:{self.depth}"
-        s += f"Children: {self.children}"
-        return s
-
-    def add_child(self, child_node):
-        child_node.parent = self
-        self.children.append(child_node)
-
-    def update(self, value):
-        self.visits += 1
-        self.value += value
+        if self.parent is not None:
+            return f"Node(dir:{self.direction}, vis:{self.visits}, val:{self.value}, dph:{self.depth},'uct:{self.uct}', children:{len(self.children)})"
+        else:
+            return f"Root(dir:{self.direction}, vis:{self.visits}, val:{self.value}, dph:{self.depth},'uct:{self.uct}', children:{len(self.children)})"
 
     @property
     def depth(self):
         d = 0
         node = self
         while node.parent:
-            d += 1
             node = node.parent
+            d += 1
         return d
 
-    @property  # added property to calculate UCT score for each child node
-    def uct(self):  # UCT score calculation formula
-        return (
-            self.value / self.visits
-            + self.c * sqrt(2 * log(self.parent.visits) / self.visits)
-            # if self.visits
-            # else 0
-        )
+    @property
+    def q(self):
+        return self.value / self.visits
+
+    @property
+    def u(self):
+        return sqrt(2 * log(self.parent.visits) / self.visits)
+
+    @property
+    def uct(self):
+        return self.q + self.c * self.u
+
+    @property
+    def is_root(self):
+        return self.parent is None
+
+    @property
+    def is_leaf(self):
+        return not self.children
+
+    @property
+    def is_fully_expanded(self):
+        return len(self.children) >= len(self.valid_moves) + helpers.zeros(self.grid)
+
+    @property
+    def is_terminal(self):
+        return self.grid.no_moves
+
+    def select(self):
+        return self.get_best_child() if self.is_fully_expanded else self.expand()
+
+    def get_best_child(self):
+        node = self
+        while node.children:
+            node = max(node.children, key=lambda x: x.uct)
+        return node
+
+    def add_child(self, child):
+        if child.direction not in self.valid_moves:
+            raise ValueError("Invalid move")
+        child.parent = self
+        self.children.append(child)
+        # self.valid_moves.remove(child.direction)
+
+    def update(self, value):
+        self.visits += 1
+        self.value += value
+
+    def backpropagate(self, value):
+        self.update(value)
+        if self.parent:
+            self.parent.backpropagate(value)
+
+    def expand(self):
+        if self.is_fully_expanded:
+            raise ValueError("Node is already expanded")
+        direction = choice(self.valid_moves)
+        new_grid = deepcopy(self.grid)
+        new_grid.move(MoveFactory.create(direction))
+        child = MCTSNode(new_grid, direction)
+        self.add_child(child)
+        # self.backpropagate(child.simulate())
+        return child
+
+    def simulate(self):
+        grid = deepcopy(self.grid)
+        while not grid.no_moves:
+            direction = choice(self.valid_moves)
+            grid.move(MoveFactory.create(direction))
+        return grid
 
 
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    max_depth = 20
-    n_sim = 500
+    max_depth = 3
+    n_sim = 10
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
         self.height = self.grid.height
         self.width = self.grid.width
-        self.root: Node
+        self.root: MCTSNode
 
     def play(self, *args, **kwargs) -> bool:
-        self.root = Node(self.grid, None)
+        self.root = MCTSNode(deepcopy(self.grid), None)
         move = MoveFactory.create(self.get_best_direction())
         return self.grid.move(move)
 
-    def get_best_direction(self) -> DIRECTION:
-        # self.expand(self.root)
+    def get_best_direction(self):
         for _ in range(self.n_sim):
-            self.search(self.root)
-        # select the child node with the highest visit count
-        best_child = max(self.root.children, key=lambda x: x.visits)
-        self.root = best_child
-        return self.root.direction
-
-    def search(self, node):
-        node = self.select(node)
-        if node.depth < self.max_depth and not node.grid.no_moves:
-            child = self.expand(node)
-            score = self.simulate(child)
-        else:
-            score = self.evaluate(node.grid)
-        print(node)
-        self.backpropagate(node, score)
-
-    def select(self, node):
-        """Traverse the tree using UCT to select the best child node to expand"""
-        node = self.root
-        while node.children:
-            best_child = max(node.children, key=lambda x: x.uct)
-            node = best_child
-        # print(node)
-        return node
-
-    def expand(self, node: Node):
-        """Expand the node by adding a new child"""
-        for direction in DIRECTION:
-            grid = deepcopy(node.grid)
-            moved = grid.move(MoveFactory.create(direction), add_tile=True)
-            if moved:  # if the move was valid
-                child = Node(grid, direction)
-                node.add_child(child)
-        child = choice(node.children)
-        return child
-
-    def simulate(self, node: Node):
-        """Simulate the game from the node using a random playout policy"""
-        grid = deepcopy(node.grid)
-        while not grid.no_moves:
-            move = choice(list(DIRECTION))
-            grid.move(MoveFactory.create(move), add_tile=True)
-        return self.evaluate(grid)
-
-    def backpropagate(self, node: Node, score):
-        """Backpropagate the score to update the information in the tree"""
-        while node:
-            node.update(score)
-            node = node.parent
+            node = self.root.select()
+            if node.is_leaf:
+                node.backpropagate(self.evaluate(node.grid))
+            else:
+                node.backpropagate(node.simulate().score)
+        return self.root.get_best_child().direction
 
     def evaluate(self, grid):
         """Return the score of the grid"""
-        maxi = helpers.max_tile(grid)
-        high_val = maxi // 4 if maxi > 256 else 256
-        score = grid.last_move.score
         val = [
-            # 0.1 * score,
-            grid.score,
-            # (0.01 * helpers.shift_score(grid) + 0.001 * grid.score) / 2,
-            # 0.1 * helpers.grid_sum(grid),
-            # 2 * helpers.zeros(grid),
-            # 0.2 * helpers.pairs(grid) * helpers.monotonicity(grid),
-            # # 2 / (helpers.smoothness(grid) + 1),
-            # # 0.01 * helpers.max_tile(grid),
-            # # helpers.zero_field(grid) * helpers.max_tile(grid),
-            # helpers.monotonicity(grid),
-            # 0.1 * helpers.higher_on_edge(grid),
-            # 2 * helpers.high_vals_on_edge(grid, high_val),
-            # 4 * helpers.low_to_high(grid, 256),
+            0.1 * grid.score,
+            # helpers.zeros(grid),
+            # 0.1 * helpers.monotonicity(grid),
+            # helpers.smoothness(grid),
+            # helpers.higher_on_edge(grid),
+            # helpers.max_tile(grid),
         ]
-        # print(val)
+        # print(grid, val)
         return sum(val)
