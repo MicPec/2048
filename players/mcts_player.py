@@ -36,16 +36,13 @@ class MCTSNode:
         return d
 
     @property
-    def q(self):
-        return self.value / self.visits
-
-    @property
-    def u(self):
-        return sqrt(2 * log(self.parent.visits) / self.visits)
-
-    @property
     def uct(self):
-        return self.q + self.c * self.u
+        return (
+            self.value / self.visits
+            + self.c * sqrt(2 * log(self.parent.visits) / self.visits)
+            if self.visits > 0
+            else float("inf")
+        )
 
     @property
     def is_root(self):
@@ -56,15 +53,8 @@ class MCTSNode:
         return not self.children
 
     @property
-    def is_fully_expanded(self):
-        return len(self.children) >= len(self.valid_moves) + helpers.zeros(self.grid)
-
-    @property
     def is_terminal(self):
         return self.grid.no_moves
-
-    def select(self):
-        return self.get_best_child() if self.is_fully_expanded else self.expand()
 
     def get_best_child(self):
         node = self
@@ -89,20 +79,16 @@ class MCTSNode:
             self.parent.backpropagate(value)
 
     def expand(self):
-        if self.is_fully_expanded:
-            raise ValueError("Node is already expanded")
-        direction = choice(self.valid_moves)
-        new_grid = deepcopy(self.grid)
-        new_grid.move(MoveFactory.create(direction))
-        child = MCTSNode(new_grid, direction)
-        self.add_child(child)
-        # self.backpropagate(child.simulate())
-        return child
+        for direction in self.valid_moves:
+            new_grid = deepcopy(self.grid)
+            new_grid.move(MoveFactory.create(direction), add_tile=True)
+            self.add_child(MCTSNode(new_grid, direction))
+        return
 
     def simulate(self):
         grid = deepcopy(self.grid)
         while not grid.no_moves:
-            direction = choice(self.valid_moves)
+            direction = choice(list(DIRECTION))
             grid.move(MoveFactory.create(direction))
         return grid
 
@@ -110,8 +96,8 @@ class MCTSNode:
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    max_depth = 3
-    n_sim = 10
+    max_depth = 8
+    n_sim = 64 * max_depth
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -125,22 +111,47 @@ class MCTSPlayer(AIPlayer):
         return self.grid.move(move)
 
     def get_best_direction(self):
+        # for direction in self.root.valid_moves:
+        #     new_grid = deepcopy(self.grid)
+        #     new_grid.move(MoveFactory.create(direction), add_tile=False)
+        #     self.root.add_child(MCTSNode(new_grid, direction))
+
         for _ in range(self.n_sim):
-            node = self.root.select()
-            if node.is_leaf:
-                node.backpropagate(self.evaluate(node.grid))
+            node = self.root.get_best_child()
+
+            if node.is_leaf and node.depth < self.max_depth and not node.is_terminal:
+                node.expand()
+                for node in node.children:
+                    score = self.evaluate(node.grid)
+                    node.update(score)
+                    node.backpropagate(score)
+                continue
             else:
-                node.backpropagate(node.simulate().score)
-        return self.root.get_best_child().direction
+                # node = node.get_best_child()
+                score = self.evaluate(node.grid)
+                node.update(score)
+                node.backpropagate(score)
+        print(self.root.valid_moves)
+        return self.select()
+
+    def select(self):
+        direction = max(self.root.children, key=lambda x: x.visits).direction
+        print(direction)
+        return direction
 
     def evaluate(self, grid):
         """Return the score of the grid"""
         val = [
-            0.1 * grid.score,
-            # helpers.zeros(grid),
-            # 0.1 * helpers.monotonicity(grid),
-            # helpers.smoothness(grid),
-            # helpers.higher_on_edge(grid),
+            # 0.1 * grid.score,
+            0.2 * helpers.grid_sum(grid),
+            12 * helpers.zeros(grid),
+            0.3 * helpers.monotonicity(grid),
+            8 * helpers.smoothness(grid),
+            helpers.pairs(grid, [2, 4, 8, 16]),
+            2 * helpers.pairs(grid, [32, 64, 128, 256]),
+            4 * helpers.pairs(grid, [512, 1024, 2048, 4096]),
+            0.4 * helpers.higher_on_edge(grid),
+            0.2 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid))
             # helpers.max_tile(grid),
         ]
         # print(grid, val)
