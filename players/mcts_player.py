@@ -9,7 +9,7 @@ from players.player import AIPlayer
 
 
 class MCTSNode:
-    c = 1.41
+    c = 1.5
 
     def __init__(self, grid: Grid2048, direction: DIRECTION):
         self.direction = direction
@@ -96,8 +96,8 @@ class MCTSNode:
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    max_depth = 8
-    n_sim = 64 * max_depth
+    max_depth = 10
+    n_sim = 512 * max_depth
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -128,7 +128,11 @@ class MCTSPlayer(AIPlayer):
                 continue
             else:
                 # node = node.get_best_child()
+                # if node.is_terminal:
+                #     score = 0  # -self.evaluate(node.grid)
+
                 score = self.evaluate(node.grid)
+                # score = self.evaluate(node.simulate())
                 node.update(score)
                 node.backpropagate(score)
         print(self.root.valid_moves)
@@ -142,17 +146,17 @@ class MCTSPlayer(AIPlayer):
     def evaluate(self, grid):
         """Return the score of the grid"""
         val = [
-            # 0.1 * grid.score,
-            0.2 * helpers.grid_sum(grid),
-            12 * helpers.zeros(grid),
-            0.3 * helpers.monotonicity(grid),
-            8 * helpers.smoothness(grid),
-            helpers.pairs(grid, [2, 4, 8, 16]),
+            # 0.2 * grid.score,
+            0.4 * helpers.grid_sum(grid),
+            16 * helpers.zeros(grid),
+            1.2 * helpers.monotonicity(grid),
+            4 * helpers.smoothness(grid),
+            1.6 * helpers.pairs(grid, [2, 4, 8, 16]),
             2 * helpers.pairs(grid, [32, 64, 128, 256]),
             4 * helpers.pairs(grid, [512, 1024, 2048, 4096]),
             0.4 * helpers.higher_on_edge(grid),
-            0.2 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid))
+            1.4 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid))
             # helpers.max_tile(grid),
         ]
-        # print(grid, val)
+        print(grid, val)
         return sum(val)

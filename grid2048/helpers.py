@@ -286,6 +286,16 @@ def zero_field(grid: Grid2048) -> float:
     return field
 
 
+def snake(grid: Grid2048) -> float:
+    """Returns the sum of the values of the snake pattern."""
+    snake = [[2048, 1024, 512, 256], [16, 32, 64, 128], [8, 4, 2, 1], [2, 4, 8, 16]]
+    res = 0
+    for i in range(grid.height):
+        for j in range(grid.width):
+            res += grid[i][j] * snake[i][j]
+    return res
+
+
 def shift_score(grid: Grid2048) -> int:
     """Returns the sum of the shifted grid."""
 
