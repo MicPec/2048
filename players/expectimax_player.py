@@ -18,7 +18,7 @@ class ExpectimaxPlayer(AIPlayer):
         super().__init__(grid)
         self.height = self.grid.height
         self.width = self.grid.width
-        self.evaluator = Evaluator()
+        self.evaluator = Evaluator(grid)
         self.register_heuristics()
 
     def play(self) -> bool:
@@ -75,33 +75,43 @@ class ExpectimaxPlayer(AIPlayer):
             return sum(values) / len(values) if values else 0
 
     def register_heuristics(self):
-        self.evaluator.register("zeros", 1.42)
-        self.evaluator.register("pairs", 0.29)
-        self.evaluator.register("pairs2", 1.15)
-        self.evaluator.register("pairs3", 1.05)
-        self.evaluator.register("smoothness", 0.38)
-        self.evaluator.register("monotonicity", 0.70)
-        self.evaluator.register("high_vals_on_edge", 0.7)
-        self.evaluator.register("high_vals_in_corner", 0.85)
-        self.evaluator.register("higher_on_edge", 2.37)
-        self.evaluator.register("score", 0.82)
+        self.evaluator.register(
+            "zeros",
+            1.42,
+            lambda grid: helpers.zeros(grid) * log(helpers.max_tile(grid), 2),
+        )
+        self.evaluator.register("pairs", 0.29, lambda grid: helpers.pairs(grid, [2, 4]))
+        self.evaluator.register(
+            "pairs2", 1.15, lambda grid: helpers.pairs(grid, [8, 16, 32, 64])
+        )
+        self.evaluator.register(
+            "pairs3", 1.05, lambda grid: helpers.pairs(grid, [128, 256, 512, 1024])
+        )
+        self.evaluator.register(
+            "smoothness", 0.38, lambda grid: helpers.smoothness(grid)
+        )
+        self.evaluator.register(
+            "monotonicity", 0.70, lambda grid: helpers.monotonicity(grid)
+        )
+        # self.evaluator.register(
+        #     "high_vals_on_edge",
+        #     0.7,
+        #     lambda grid: helpers.high_vals_on_edge(grid, edge_val),
+        # )
+        self.evaluator.register(
+            "high_vals_in_corner",
+            0.85,
+            lambda grid: helpers.high_vals_in_corner(grid, helpers.max_tile(grid)),
+        )
+        self.evaluator.register(
+            "higher_on_edge", 2.37, lambda grid: helpers.higher_on_edge(grid)
+        )
+        self.evaluator.register("score", 0.82, lambda grid: grid.score)
 
     def evaluate(self, grid):
         """Return the score of the grid"""
         max_tile = helpers.max_tile(grid)
         edge_val = max_tile // 2 if max_tile > 256 else 256
 
-        self.evaluator["zeros"] = helpers.zeros(grid) * log(max_tile, 2)
-        self.evaluator["pairs"] = helpers.pairs(grid, [2, 4])
-        self.evaluator["pairs2"] = helpers.pairs(grid, [8, 16, 32, 64])
-        self.evaluator["pairs3"] = helpers.pairs(grid, [128, 256, 512, 1024])
-        self.evaluator["smoothness"] = helpers.smoothness(grid)
-        self.evaluator["monotonicity"] = helpers.monotonicity(grid)
-        self.evaluator["high_vals_on_edge"] = helpers.high_vals_on_edge(grid, edge_val)
-        self.evaluator["high_vals_in_corner"] = helpers.high_vals_in_corner(
-            grid, max_tile
-        )
-        self.evaluator["higher_on_edge"] = helpers.higher_on_edge(grid)
-        self.evaluator["score"] = grid.score
-        # print(grid, self.evaluator)
+        print(grid, self.evaluator)
         return self.evaluator.evaluate()

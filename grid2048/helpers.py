@@ -2,6 +2,7 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import product
+from typing import Any, Callable
 
 from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 
@@ -10,31 +11,32 @@ from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 class Heuristic:
     name: str
     weight: float
-    value: float
+    fn: Callable[..., float]
 
 
 class Evaluator:
-    def __init__(self):
+    def __init__(self, grid: Grid2048):
+        self.grid = grid
         self.heuristics = {}
 
-    def register(self, name: str, weight: float):
-        self.heuristics[name] = Heuristic(name, weight, 0.0)
+    def register(self, name: str, weight: float, fn: Callable[..., float]):
+        self.heuristics[name] = Heuristic(name, weight, fn)
 
     def __str__(self):
-        result = ""
-        for name, val in self.heuristics.items():
-            result += f"{name!r}: {val.value * val.weight:.2f} \n"
-        return result
+        return "".join(
+            f"{name!r}: {val.fn(self.grid) * val.weight:.2f} \n"
+            for name, val in self.heuristics.items()
+        )
 
-    def __setitem__(self, name: str, value: float):
-        if name not in self.heuristics:
-            self.register(name, 1.0)
-        self.heuristics[name].value = value
+    # def __setitem__(self, name: str, value: float):
+    #     if name not in self.heuristics:
+    #         self.register(name, 1.0)
+    #     self.heuristics[name].value = value
 
     def __getitem__(self, name: str) -> float:
         if name not in self.heuristics:
             raise KeyError(f"Unknown heuristic: {name!r}")
-        return self.heuristics[name].value * self.heuristics[name].weight
+        return self.heuristics[name].fn() * self.heuristics[name].weight
 
     def get_weight(self, name: str) -> float:
         if name not in self.heuristics:
@@ -47,7 +49,7 @@ class Evaluator:
         self.heuristics[name].weight = weight
 
     def evaluate(self) -> float:
-        return sum(val.value * val.weight for val in self.heuristics.values())
+        return sum(val.fn(self.grid) * val.weight for val in self.heuristics.values())
 
 
 def get_valid_moves(grid: Grid2048) -> list[DIRECTION]:
@@ -83,7 +85,7 @@ def monotonicity(grid: Grid2048) -> float:
             if (
                 row[i] == row[i + 1] * 2
                 or row[i] == row[i + 1] // 2
-                # or row[i] == row[i + 1]
+                or row[i] == row[i + 1]
                 and row[i] != 0
             ):
                 score += row[i]
@@ -93,7 +95,7 @@ def monotonicity(grid: Grid2048) -> float:
             if (
                 col[i] == col[i + 1] * 2
                 or col[i] == col[i + 1] // 2
-                # or col[i] == col[i + 1]
+                or col[i] == col[i + 1]
                 and col[i] != 0
             ):
                 score += col[i]
@@ -296,7 +298,7 @@ def snake(grid: Grid2048) -> float:
     return res
 
 
-def shift_score(grid: Grid2048) -> int:
+def move_score(grid: Grid2048) -> int:
     """Returns the sum of the shifted grid."""
 
     def combine_tiles(cell: list[int]) -> int:
