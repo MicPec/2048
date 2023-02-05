@@ -9,7 +9,7 @@ from players.player import AIPlayer
 
 
 class MCTSNode:
-    c = 2
+    c = 5
 
     def __init__(self, grid: Grid2048, direction: DIRECTION):
         self.direction = direction
@@ -118,7 +118,7 @@ class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
     max_depth = 5
-    n_sim = 128 * max_depth
+    n_sim = 1024 * max_depth
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -134,41 +134,44 @@ class MCTSPlayer(AIPlayer):
     def get_best_direction(self):
         for _ in range(self.n_sim):
             node = self.root.get_best_child()
-
+            # if node.is_terminal:
+            #     continue
             if node.is_leaf and node.depth < self.max_depth and not node.is_terminal:
-                node.expand()
-                for node in node.children:
-                    score = self.evaluate(node.simulate(5))
-                    node.update(score)
-                    node.backpropagate(score)
-
-                # continue
+                node = node.expand()
+                # for node in node.children:
+                score = self.evaluate(node.grid)
+                #     node.update(score)
+                #     node.backpropagate(score)
             else:
-                score = self.evaluate(node.simulate(5))
-                node.update(score)
-                node.backpropagate(score)
-        print(self.root.valid_moves)
-        return self.select()
+                score = self.evaluate(node.simulate(0))
+            node.update(score)
+            node.backpropagate(score)
+        # print(self.root.valid_moves)
+        return self.select_move()
 
-    def select(self):
+    def select_move(self):
         direction = max(self.root.children, key=lambda x: x.visits).direction
-        print(direction)
+        # print(direction)
         return direction
 
     def evaluate(self, grid):
         """Return the score of the grid"""
+        val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
+        zeros = helpers.zeros(grid) / (self.height * self.width)
         val = [
-            # 0.2 * grid.score,
-            0.4 * helpers.grid_sum(grid),
-            16 * helpers.zeros(grid),
-            helpers.monotonicity(grid),
-            4 * helpers.smoothness(grid),
+            # # 0.2 * grid.score,
+            # 0.4 * helpers.grid_sum(grid),
+            # 16 * helpers.zeros(grid),
+            # 0.1 * helpers.monotonicity(grid),
+            # 0.4 * helpers.smoothness(grid),
             # 1.6 * helpers.pairs(grid, [2, 4, 8, 16]),
-            # 1.2 * helpers.pairs(grid, [32, 64, 128, 256]),
-            # 1.4 * helpers.pairs(grid, [512, 1024, 2048, 4096]),
-            # 0.2 * helpers.higher_on_edge(grid),
+            # # 1.2 * helpers.pairs(grid, [32, 64, 128, 256]),
+            # # 1.4 * helpers.pairs(grid, [512, 1024, 2048, 4096]),
+            # # 0.2 * helpers.higher_on_edge(grid),
             # 1.1 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid))
-            # helpers.max_tile(grid),
+            # # helpers.max_tile(grid),
+            val_move_mean * zeros,
+            # zeros,
         ]
-        print(grid, val)
+        # print(grid, val)
         return sum(val)

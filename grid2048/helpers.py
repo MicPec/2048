@@ -102,6 +102,32 @@ def monotonicity(grid: Grid2048) -> float:
     return 1 / grid_size(grid) * score
 
 
+def monotonicity2(grid: Grid2048) -> float:
+    """Returns the number of monotonic rows and columns in the grid.
+    It shows how well the numbers are ordered,
+    either increasing, decreasing or equal in each row and column.
+    For small values, result is small, so this affects the big values more."""
+    score = 0
+    for row in grid.data:
+        for i in range(len(row) - 1):
+            if (
+                row[i] == row[i + 1] * 2
+                or row[i] == row[i + 1] // 2
+                or row[i] == row[i + 1]
+                and row[i] != 0
+            ):
+                score += row[i]
+            if row[i] == row[i + 1]:
+                score += row[i] * 2
+    for col in zip(*grid.data):
+        for i in range(len(col) - 1):
+            if col[i] == col[i + 1] * 2 or col[i] == col[i + 1] // 2 and col[i] != 0:
+                score += col[i]
+            if col[i] == col[i + 1]:
+                score += col[i] * 2
+    return 1 / grid_size(grid) * score
+
+
 def smoothness(grid: Grid2048) -> float:
     """Returns the smoothness of the grid.
     It works by iterating through the grid, and comparing each element

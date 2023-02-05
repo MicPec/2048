@@ -113,5 +113,7 @@ class ExpectimaxPlayer(AIPlayer):
         max_tile = helpers.max_tile(grid)
         edge_val = max_tile // 2 if max_tile > 256 else 256
 
-        print(grid, self.evaluator)
-        return self.evaluator.evaluate()
+        # print(grid, self.evaluator)
+        val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
+        zeros = helpers.zeros(grid) / (self.height * self.width)
+        return val_move_mean + zeros

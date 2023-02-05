@@ -1,6 +1,5 @@
 import itertools
 from copy import deepcopy
-import numpy as np
 from enum import Enum
 from random import choice, choices
 from typing import Callable, TypeVar
@@ -24,7 +23,9 @@ class Grid2048:
 
     def __str__(self):
         # Find the length of the longest number
-        val = np.max(self._grid)
+        val = 0
+        for row in self._grid:
+            val = max(row) if max(row) > val else val
         # Create the string
         l = len(str(val))
         s = "\n" + "-" * (l + 1) * self.width + "-\n"
@@ -46,10 +47,10 @@ class Grid2048:
         self._grid[key] = value
 
     def __eq__(self, other):
-        return np.array_equal(self._grid, other._grid)
+        return self._grid == other._grid
 
     @property
-    def data(self) -> np.ndarray:
+    def data(self) -> list[list[int]]:
         return self._grid
 
     @property
@@ -59,47 +60,51 @@ class Grid2048:
         return self._last_move
 
     @data.setter
-    def data(self, value: np.ndarray) -> None:
-        if not isinstance(value, np.ndarray):
-            raise TypeError("Grid data must be a numpy array of integers")
-        if value.shape != (self.height, self.width):
+    def data(self, value: list[list[int]]) -> None:
+        if not all(isinstance(row, list) for row in value):
+            raise TypeError("Grid data must be a list of lists of integers")
+        if len(value) != self.height or len(value[0]) != self.width:
             raise ValueError(
-                f"Invalid grid dimensions:{self.width}x{self.height} != {value.shape}"
+                f"Invalid grid dimensions:{self.width}x{self.height} != {len(value)}x{len(value[0])}"
             )
         self._grid = value
 
     def reset(self) -> None:
         """Reset the grid"""
-        self._grid = np.zeros((self.height, self.width), int)
+        self._grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
         self.score = 0
         self.moves = 0
         self.add_random_tile(self.get_empty_fields())
         self.state = STATE.IDLE
 
-    def get_empty_fields(self) -> np.ndarray:
+    def get_empty_fields(self) -> list[tuple[int, int]]:
         """Return a list of tuples containing the coordinates of empty fields"""
-        return np.argwhere(self._grid == 0)
+        return [
+            (row, col)
+            for row, col in itertools.product(range(self.height), range(self.width))
+            if self._grid[row][col] == 0
+        ]
 
-    def add_random_tile(self, empty_fields: np.ndarray) -> None:
+    def add_random_tile(self, empty_fields: list) -> None:
         """Add a random tile to the grid"""
-        if empty_fields.size > 0:
+        if empty_fields:
             row, col = choice(empty_fields)
-            self._grid[row, col] = choices([2, 4], [0.9, 0.1])[0]
+            self._grid[row][col] = choices([2, 4], [0.9, 0.1])[0]
 
     @property
     def no_moves(self) -> bool:
         """Check if there are any moves left"""
-        for row, col in np.ndindex(self.height, self.width):
-            if self._grid[row, col] == 0:
+        for col, row in itertools.product(range(self.width), range(self.height)):
+            if self._grid[row][col] == 0:
                 return False
             if (
                 row < self.height - 1
-                and self._grid[row, col] == self._grid[row + 1, col]
+                and self._grid[row][col] == self._grid[row + 1][col]
             ):
                 return False
             if (
                 col < self.width - 1
-                and self._grid[row, col] == self._grid[row, col + 1]
+                and self._grid[row][col] == self._grid[row][col + 1]
             ):
                 return False
         return True
@@ -132,11 +137,11 @@ class Move:
 
     def __call__(self, grid: Grid2048) -> Grid2048:
         """Execute the move"""
-        cmp = np.copy(grid.data)
+        cmp = deepcopy(grid.data)
         self.dir_fn(self, grid)
         self._called = True
         # It`s done this way, because I could not find a better/faster way to do it.
-        self._is_valid = not np.array_equal(grid.data, cmp)
+        self._is_valid = grid.data != cmp
         return grid
 
     @property
@@ -157,12 +162,13 @@ class Move:
         for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
             temp = [
-                matrix[row, col] for row in range(len(matrix)) if matrix[row, col] != 0
+                matrix[row][col] for row in range(len(matrix)) if matrix[row][col] != 0
             ]
             # Combine the tiles
             self.score += self.combine_tiles(temp)
             # Rebuild the column
-            matrix[:, col] = 0
+            for i in range(len(matrix)):
+                matrix[i][col] = 0
             j = 0
             for row in range(len(matrix)):
                 if j < len(temp) and temp[j] != 0:
@@ -205,7 +211,8 @@ class Move:
             # Combine the tiles
             self.score += self.combine_tiles(temp)
             # Rebuild the row
-            matrix[row] = np.zeros(len(matrix[0]), int)
+            for k in range(len(matrix[0])):
+                matrix[row][k] = 0
             j = 0
             for col in range(len(matrix[0])):
                 if j < len(temp) and temp[j] != 0:

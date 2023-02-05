@@ -10,7 +10,7 @@ from players.player import AIPlayer
 class MinimaxPlayer(AIPlayer):
     """AI player using Minimax algorithm"""
 
-    depth = 4
+    depth = 5
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -58,7 +58,7 @@ class MinimaxPlayer(AIPlayer):
             for direction in DIRECTION:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
-                moved = new_grid.move(move, add_tile=False)
+                moved = new_grid.move(move, add_tile=True)
                 if not moved:
                     continue
                 # new_grid.add_random_tile(new_grid.get_empty_fields())
@@ -71,24 +71,21 @@ class MinimaxPlayer(AIPlayer):
         max_val = helpers.max_tile(grid)
         move_score = grid.last_move.score
         high_val = max_val // 4 if max_val > 512 else 512
-        val_mean = helpers.values_mean(grid)
+        val_move_mean = helpers.values_mean(grid) / grid.moves
 
         val = [
-            helpers.grid_sum(grid),
-            move_score,
-            # val_mean * helpers.count_vals_gte(grid, 128),
-            # val_mean / (helpers.count_vals_lte(grid, 16) + 1),
-            64 / (helpers.count_vals_lte(grid, 4) + 1),
-            48 / (helpers.count_vals_lte(grid, 8) + 1),
-            32 / (helpers.count_vals_lte(grid, 16) + 1),
-            24 / (helpers.count_vals_lte(grid, 32) + 1),
-            20 / (helpers.count_vals_lte(grid, 64) + 1),
-            16 / (helpers.count_vals_lte(grid, 128) + 1),
-            12 / (helpers.count_vals_lte(grid, 256) + 1),
-            8 / (helpers.count_vals_lte(grid, 512) + 1),
-            4 / (helpers.count_vals_lte(grid, 1024) + 1),
-            2 / (helpers.count_vals_lte(grid, 2048) + 1),
-            helpers.monotonicity(grid),
+            # # 0.1 * grid.score,
+            # 1 * helpers.grid_sum(grid),
+            helpers.zeros(grid),
+            0.1 * helpers.monotonicity2(grid),
+            # 2 * helpers.smoothness(grid),
+            # # helpers.pairs(grid, [2, 4, 8]),
+            # # 1.2 * helpers.pairs(grid, [32, 64, 128, 256]),
+            # # 1.4 * helpers.pairs(grid, [512, 1024, 2048, 4096]),
+            # 0.1 * helpers.higher_on_edge(grid),
+            # 0.1 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid)),
+            # # helpers.max_tile(grid),
+            val_move_mean,
         ]
         print(val)
         return sum(val)
