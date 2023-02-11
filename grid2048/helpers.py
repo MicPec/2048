@@ -3,6 +3,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from itertools import product
 from typing import Any, Callable
+import numpy as np
 
 from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 
@@ -70,8 +71,9 @@ def normalize(values: list[any]) -> list[float]:
 
 
 def zeros(grid: Grid2048) -> float:
-    """Returns the number of empty cells in the grid."""
-    return len([cell for row in grid.data for cell in row if cell == 0])
+    """Returns the number of empty cells in the g.count_nonzero(arr==0)rid."""
+    return np.count_nonzero(grid.data == 0)
+    # return len([cell for row in grid.data for cell in row if cell == 0])
 
 
 def monotonicity(grid: Grid2048) -> float:
@@ -351,12 +353,12 @@ def move_score(grid: Grid2048) -> int:
 
 def max_tile(grid: Grid2048) -> int:
     """Returns the maximum tile in the grid."""
-    return max(cell for row in grid.data for cell in row)
+    return np.max(grid.data)
 
 
 def grid_sum(grid: Grid2048) -> int:
     """Returns the sum of all cells in the grid."""
-    return sum(cell for row in grid.data for cell in row)
+    return np.sum(grid.data)
 
 
 def grid_size(grid: Grid2048) -> int:
@@ -366,11 +368,9 @@ def grid_size(grid: Grid2048) -> int:
 
 def grid_mean(grid: Grid2048) -> float:
     """Returns the mean of all cells in the grid."""
-    return grid_sum(grid) / grid_size(grid)
+    return np.mean(grid.data)
 
 
 def values_mean(grid: Grid2048) -> float:
     """Returns the mean of all non-zero cells in the grid."""
-    return grid_sum(grid) / len(
-        [cell for row in grid.data for cell in row if cell != 0]
-    )
+    return np.true_divide(grid.data.sum(), (grid.data != 0).sum())

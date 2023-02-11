@@ -6,17 +6,18 @@ from random import choice
 from grid2048 import helpers
 from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 from players.player import AIPlayer
+import numpy as np
 
 
 class MCTSNode:
-    c = 5
+    c = 0.5
 
     def __init__(self, grid: Grid2048, direction: DIRECTION):
         self.direction = direction
         self.grid = grid
         self.visits = 0
         self.value = 0
-        self.parent: MCTSNode = None
+        self.parent: MCTSNode = None  # type: ignore
         self.children = []
         self.valid_moves = helpers.get_valid_moves(self.grid)
 
@@ -65,7 +66,8 @@ class MCTSNode:
         return self.grid.no_moves
 
     def is_fully_expanded(self):
-        return len(self.valid_moves) == len(self.children)
+        return self.valid_moves == []
+        # return len(self.valid_moves) >= len(self.children)
 
     def get_best_child(self):
         node = self
@@ -89,22 +91,22 @@ class MCTSNode:
         if self.parent:
             self.parent.backpropagate(value)
 
-    def expand(self):
-        for direction in self.valid_moves:
-            new_grid = deepcopy(self.grid)
-            new_grid.move(MoveFactory.create(direction), add_tile=True)
-            self.add_child(MCTSNode(new_grid, direction))
-        return self  # choice(self.children)
-
     # def expand(self):
-    #     direction = choice(self.valid_moves)
-    #     new_grid = deepcopy(self.grid)
-    #     new_grid.move(MoveFactory.create(direction), add_tile=True)
-    #     child = MCTSNode(new_grid, direction)
-    #     self.add_child(child)
-    #     return child
+    #     for direction in self.valid_moves:
+    #         new_grid = deepcopy(self.grid)
+    #         new_grid.move(MoveFactory.create(direction), add_tile=True)
+    #         self.add_child(MCTSNode(new_grid, direction))
+    #     return self  # choice(self.children)
 
-    def simulate(self, sim_l):
+    def expand(self):
+        direction = choice(self.valid_moves)
+        new_grid = deepcopy(self.grid)
+        new_grid.move(MoveFactory.create(direction), add_tile=True)
+        child = MCTSNode(new_grid, direction)
+        self.add_child(child)
+        return child
+
+    def simulate(self, sim_l=float("inf")):
         grid = deepcopy(self.grid)
         s = 0
         while not grid.no_moves and s < sim_l:
@@ -117,7 +119,7 @@ class MCTSNode:
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    max_depth = 5
+    max_depth = 4
     n_sim = 1024 * max_depth
 
     def __init__(self, grid: Grid2048):
@@ -132,26 +134,47 @@ class MCTSPlayer(AIPlayer):
         return self.grid.move(move)
 
     def get_best_direction(self):
-        for _ in range(self.n_sim):
+        n_sim = 0
+        while n_sim < self.n_sim:
             node = self.root.get_best_child()
-            # if node.is_terminal:
-            #     continue
-            if node.is_leaf and node.depth < self.max_depth and not node.is_terminal:
-                node = node.expand()
+            if node.is_terminal:
+                n_sim += 1
+                node.update(-node.value)
+                # node.backpropagate(-node.value)
+                continue
+            if node.is_leaf and node.depth < self.max_depth:
+                child = node.expand()
+                score = self.evaluate(node.simulate())
+                child.update(score)
+                child.backpropagate(score)
                 # for node in node.children:
-                score = self.evaluate(node.grid)
-                #     node.update(score)
-                #     node.backpropagate(score)
+                #   child.update(score)
+                #   child.backpropagate(score)
             else:
                 score = self.evaluate(node.simulate(0))
-            node.update(score)
-            node.backpropagate(score)
-        # print(self.root.valid_moves)
+                node.update(score)
+                node.backpropagate(score)
+            n_sim += 1
+        # for _ in range(self.n_sim):
+        #     node = self.root.get_best_child()
+        #     # if node.is_terminal:
+        #     #     continue
+        #     if node.is_leaf and node.depth < self.max_depth and not node.is_terminal:
+        #         node = node.expand()
+        #         for node in node.children:
+        #             score = self.evaluate(node.simulate(0))
+        #             node.update(score)
+        #             node.backpropagate(score)
+        #         # continue
+        #     else:
+        #         score = self.evaluate(node.simulate(0))
+        #         node.update(score)
+        #         node.backpropagate(score)
+        # # print(self.root.valid_moves)
         return self.select_move()
 
     def select_move(self):
         direction = max(self.root.children, key=lambda x: x.visits).direction
-        # print(direction)
         return direction
 
     def evaluate(self, grid):
@@ -171,6 +194,9 @@ class MCTSPlayer(AIPlayer):
             # 1.1 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid))
             # # helpers.max_tile(grid),
             val_move_mean * zeros,
+            # 0.001 * val_move_mean * helpers.monotonicity(grid),
+            # 0.01 * val_move_mean * helpers.smoothness(grid),
+            # 0.01
             # zeros,
         ]
         # print(grid, val)

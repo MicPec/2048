@@ -1,6 +1,7 @@
 import unittest
 
 from grid2048.grid2048 import DIRECTION, STATE, Grid2048, MoveFactory
+import numpy as np
 
 
 class TestGrid2048(unittest.TestCase):
@@ -12,7 +13,7 @@ class TestGrid2048(unittest.TestCase):
 
     def test_str(self):
         grid = Grid2048(4, 4)
-        grid.data = [[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 8, 0], [0, 0, 0, 16]]
+        grid.data = np.array([[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 8, 0], [0, 0, 0, 16]])
         self.assertEqual(
             str(grid),
             "\n-------------\n|2 |  |  |  |\n-------------\n|  |4 |  |  |\n-------------\n|  |  |8 |  |\n-------------\n|  |  |  |16|\n-------------\n",
@@ -32,18 +33,18 @@ class TestGrid2048(unittest.TestCase):
 
     def test_score(self):
         grid = Grid2048(4, 4)
-        grid.data = [[0 for _ in range(4)] for _ in range(4)]
+        grid.data = np.zeros((4, 4), int)
         move = MoveFactory.create(DIRECTION.LEFT)
         grid.move(move)
         self.assertEqual(grid.score, 0)
-        grid.data = [[2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2], [4, 0, 0, 4]]
+        grid.data = np.array([[2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2], [4, 0, 0, 4]])
         move = MoveFactory.create(DIRECTION.LEFT)
         grid.move(move)
         self.assertEqual(grid.score, 20)
 
     def test_get_empty_fields(self):
         grid = Grid2048(4, 4)
-        grid.data = [[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 8, 0], [0, 0, 0, 16]]
+        grid.data = np.array([[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 8, 0], [0, 0, 0, 16]])
         empty_fields = grid.get_empty_fields()
         self.assertEqual(len(empty_fields), 12)
         self.assertNotIn((0, 0), empty_fields)

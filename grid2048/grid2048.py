@@ -20,6 +20,7 @@ class Grid2048:
         self._last_move = None
         self.width = width
         self.height = height
+        self._grid = np.array
         self.reset()
 
     def __str__(self):
@@ -76,13 +77,13 @@ class Grid2048:
         self.add_random_tile(self.get_empty_fields())
         self.state = STATE.IDLE
 
-    def get_empty_fields(self) -> np.ndarray:
+    def get_empty_fields(self):
         """Return a list of tuples containing the coordinates of empty fields"""
-        return np.argwhere(self._grid == 0)
+        return list(zip(*np.nonzero(self._grid == 0)))
 
     def add_random_tile(self, empty_fields: np.ndarray) -> None:
         """Add a random tile to the grid"""
-        if empty_fields.size > 0:
+        if len(empty_fields) > 0:
             row, col = choice(empty_fields)
             self._grid[row, col] = choices([2, 4], [0.9, 0.1])[0]
 
@@ -156,18 +157,14 @@ class Move:
         matrix = grid.data
         for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
-            temp = [
-                matrix[row, col] for row in range(len(matrix)) if matrix[row, col] != 0
-            ]
+            lst = matrix[:, col]
+            temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
             # Rebuild the column
-            matrix[:, col] = 0
-            j = 0
-            for row in range(len(matrix)):
-                if j < len(temp) and temp[j] != 0:
-                    matrix[row][col] = temp[j]
-                    j += 1
+            if temp:
+                matrix[:, col] = 0
+                matrix[: len(temp), col] = temp
         return grid
 
     def shift_down(self, grid: Grid2048) -> Grid2048:
@@ -175,64 +172,44 @@ class Move:
         matrix = grid.data
         for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
-            temp = [
-                matrix[row][col]
-                for row in range(len(matrix) - 1, -1, -1)
-                if matrix[row][col] != 0
-            ]
+            lst = matrix[:, col]
+            temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
             # Rebuild the column
-            for k in range(len(matrix)):
-                matrix[k][col] = 0
-            j = 0
-            for row in range(len(matrix) - 1, -1, -1):
-                if j < len(temp) and temp[j] != 0:
-                    matrix[row][col] = temp[j]
-                    j += 1
+            if temp:
+                matrix[::-1, col] = 0
+                matrix[-len(temp) :, col] = temp
         return grid
 
     def shift_left(self, grid: Grid2048) -> Grid2048:
         """Shift the grid left combining tiles"""
         matrix = grid.data
-        for row in range(len(matrix)):
+        for col in range(matrix.shape[0]):
             # Create a temporary list to store the non-zero tiles
-            temp = [
-                matrix[row][col]
-                for col in range(len(matrix[0]))
-                if matrix[row][col] != 0
-            ]
+            lst = matrix[col, :]
+            temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
-            # Rebuild the row
-            matrix[row] = np.zeros(len(matrix[0]), int)
-            j = 0
-            for col in range(len(matrix[0])):
-                if j < len(temp) and temp[j] != 0:
-                    matrix[row][col] = temp[j]
-                    j += 1
+            # Rebuild the column
+            if temp:
+                matrix[col, :] = 0
+                matrix[col, : len(temp)] = temp
         return grid
 
     def shift_right(self, grid: Grid2048) -> Grid2048:
         """Shift the grid right combining tiles"""
         matrix = grid.data
-        for row in range(len(matrix)):
+        for col in range(matrix.shape[0]):
             # Create a temporary list to store the non-zero tiles
-            temp = [
-                matrix[row][col]
-                for col in range(len(matrix[0]) - 1, -1, -1)
-                if matrix[row][col] != 0
-            ]
+            lst = matrix[col, ::-1]
+            temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
-            # Rebuild the row
-            for k in range(len(matrix[0])):
-                matrix[row][k] = 0
-            j = 0
-            for col in range(len(matrix[0]) - 1, -1, -1):
-                if j < len(temp) and temp[j] != 0:
-                    matrix[row][col] = temp[j]
-                    j += 1
+            # Rebuild the column
+            if temp:
+                matrix[col, :] = 0
+                matrix[col, -len(temp) :] = temp[::-1]
         return grid
 
     def combine_tiles(self, temp: list[int]) -> int:
