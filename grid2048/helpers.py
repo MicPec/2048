@@ -2,6 +2,7 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import product
+from math import log, sqrt
 from typing import Any, Callable
 import numpy as np
 
@@ -127,7 +128,7 @@ def monotonicity2(grid: Grid2048) -> float:
                 score += col[i]
             if col[i] == col[i + 1]:
                 score += col[i] * 2
-    return 1 / grid_size(grid) * score
+    return sqrt(score) / grid_size(grid)
 
 
 def smoothness(grid: Grid2048) -> float:

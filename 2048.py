@@ -38,8 +38,8 @@ def main() -> None:
     parser.add_argument("-r", "--rows", "--height", type=int, help="height of the grid")
     parser.add_argument("-p", "--player", type=str, help="player type")
     args = parser.parse_args()
-    width = args.cols or 4
-    height = args.rows or 4
+    width = args.cols or WIDTH
+    height = args.rows or HEIGHT
     player = args.player or "user"
     if player not in player_factory.container.keys():
         raise ValueError(f"Invalid player type: {player!r}")

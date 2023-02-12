@@ -20,7 +20,7 @@ class Grid2048:
         self._last_move = None
         self.width = width
         self.height = height
-        self._grid = np.array
+        self._grid = np.ndarray
         self.reset()
 
     def __str__(self):

@@ -1,16 +1,17 @@
 """AI player using Monte Carlo Tree Search algorithm"""
+import math
 from copy import deepcopy
-from math import log, sqrt
 from random import choice
 
 from grid2048 import helpers
 from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 from players.player import AIPlayer
-import numpy as np
 
 
 class MCTSNode:
-    c = 0.5
+    """Node in the Monte Carlo Tree Search tree"""
+
+    c = 0.01
 
     def __init__(self, grid: Grid2048, direction: DIRECTION):
         self.direction = direction
@@ -40,9 +41,9 @@ class MCTSNode:
     def uct(self):
         return (
             self.value / self.visits
-            + self.c * sqrt(2 * log(self.parent.visits) / self.visits)
+            + self.c * math.sqrt(2 * math.log(self.parent.visits) / self.visits)
             if self.visits > 0
-            else float("inf")
+            else math.inf
         )
 
     @property
@@ -50,24 +51,12 @@ class MCTSNode:
         return (
             (self.value + self.parent.value) / (self.visits + self.parent.visits)
             if self.visits > 0
-            else float("inf")
+            else math.inf
         )
-
-    @property
-    def is_root(self):
-        return self.parent is None
-
-    @property
-    def is_leaf(self):
-        return not self.children
 
     @property
     def is_terminal(self):
         return self.grid.no_moves
-
-    def is_fully_expanded(self):
-        return self.valid_moves == []
-        # return len(self.valid_moves) >= len(self.children)
 
     def get_best_child(self):
         node = self
@@ -91,25 +80,17 @@ class MCTSNode:
         if self.parent:
             self.parent.backpropagate(value)
 
-    # def expand(self):
-    #     for direction in self.valid_moves:
-    #         new_grid = deepcopy(self.grid)
-    #         new_grid.move(MoveFactory.create(direction), add_tile=True)
-    #         self.add_child(MCTSNode(new_grid, direction))
-    #     return self  # choice(self.children)
-
     def expand(self):
-        direction = choice(self.valid_moves)
-        new_grid = deepcopy(self.grid)
-        new_grid.move(MoveFactory.create(direction), add_tile=True)
-        child = MCTSNode(new_grid, direction)
-        self.add_child(child)
-        return child
+        for direction in self.valid_moves:
+            new_grid = deepcopy(self.grid)
+            new_grid.move(MoveFactory.create(direction), add_tile=True)
+            self.add_child(MCTSNode(new_grid, direction))
+        return choice(self.children)
 
-    def simulate(self, sim_l=float("inf")):
+    def simulate(self, sim_l=math.inf):
         grid = deepcopy(self.grid)
         s = 0
-        while not grid.no_moves and s < sim_l:
+        while not grid.no_moves and (s < sim_l or sim_l < 0):
             s += 1
             direction = choice(list(DIRECTION))
             grid.move(MoveFactory.create(direction))
@@ -119,8 +100,18 @@ class MCTSNode:
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
-    max_depth = 4
-    n_sim = 1024 * max_depth
+    # Length of the simulation. How many times the simulation is run
+    sim_length = 256
+
+    # Number of random steps to take before evaluating the grid.
+    # Set to positive integer to evaluate the grid after a certain number of random moves.
+    # Set to 0 to evaluate the grid after each move.
+    # Set to -1 to evaluate the grid after the game is over.
+    # Be careful with this parameter, as it can cause the simulation to take a very long time.
+    # Also, make sure that the evaluation function will return proper values for the grid.
+    # By defalut, the evaluation function returns the mean of the values multiplied by the number empty tiles,
+    # so for terminal nodes, the return value will always be 0.
+    rnd_steps = 0
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -134,43 +125,18 @@ class MCTSPlayer(AIPlayer):
         return self.grid.move(move)
 
     def get_best_direction(self):
-        n_sim = 0
-        while n_sim < self.n_sim:
+        for _ in range(self.sim_length):
             node = self.root.get_best_child()
             if node.is_terminal:
-                n_sim += 1
-                node.update(-node.value)
-                # node.backpropagate(-node.value)
-                continue
-            if node.is_leaf and node.depth < self.max_depth:
-                child = node.expand()
-                score = self.evaluate(node.simulate())
-                child.update(score)
-                child.backpropagate(score)
-                # for node in node.children:
-                #   child.update(score)
-                #   child.backpropagate(score)
-            else:
-                score = self.evaluate(node.simulate(0))
+                score = -2 / math.sqrt(node.depth)
                 node.update(score)
                 node.backpropagate(score)
-            n_sim += 1
-        # for _ in range(self.n_sim):
-        #     node = self.root.get_best_child()
-        #     # if node.is_terminal:
-        #     #     continue
-        #     if node.is_leaf and node.depth < self.max_depth and not node.is_terminal:
-        #         node = node.expand()
-        #         for node in node.children:
-        #             score = self.evaluate(node.simulate(0))
-        #             node.update(score)
-        #             node.backpropagate(score)
-        #         # continue
-        #     else:
-        #         score = self.evaluate(node.simulate(0))
-        #         node.update(score)
-        #         node.backpropagate(score)
-        # # print(self.root.valid_moves)
+                continue
+            child = node.expand()
+            score = self.evaluate(child.simulate(self.rnd_steps))
+            child.update(score)
+            child.backpropagate(score)
+
         return self.select_move()
 
     def select_move(self):
@@ -181,23 +147,14 @@ class MCTSPlayer(AIPlayer):
         """Return the score of the grid"""
         val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
         zeros = helpers.zeros(grid) / (self.height * self.width)
+        max_tile = helpers.max_tile(grid)
         val = [
-            # # 0.2 * grid.score,
-            # 0.4 * helpers.grid_sum(grid),
-            # 16 * helpers.zeros(grid),
-            # 0.1 * helpers.monotonicity(grid),
-            # 0.4 * helpers.smoothness(grid),
-            # 1.6 * helpers.pairs(grid, [2, 4, 8, 16]),
-            # # 1.2 * helpers.pairs(grid, [32, 64, 128, 256]),
-            # # 1.4 * helpers.pairs(grid, [512, 1024, 2048, 4096]),
-            # # 0.2 * helpers.higher_on_edge(grid),
-            # 1.1 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid))
-            # # helpers.max_tile(grid),
-            val_move_mean * zeros,
-            # 0.001 * val_move_mean * helpers.monotonicity(grid),
-            # 0.01 * val_move_mean * helpers.smoothness(grid),
-            # 0.01
-            # zeros,
+            math.sqrt(
+                helpers.monotonicity2(grid) * helpers.smoothness(grid) * val_move_mean
+            )
+            / 50,
+            helpers.higher_on_edge(grid) * math.log(2, max_tile) * val_move_mean / 100,
+            pow(2, val_move_mean * zeros),
         ]
-        # print(grid, val)
+        # print(val)
         return sum(val)
