@@ -5,6 +5,7 @@ from grid2048.grid2048 import Grid2048
 from players.cycle_player import CyclePlayer
 from players.expectimax_player import ExpectimaxPlayer
 from players.mcts_player import MCTSPlayer
+from players.mcs_player import MCSPlayer
 from players.minimax_player import MinimaxPlayer
 from players.player import PlayerFactory
 from players.random_player import RandomPlayer
@@ -17,6 +18,7 @@ player_factory = PlayerFactory()
 player_factory.register("user", UserPlayer)
 player_factory.register("random", RandomPlayer)
 player_factory.register("cycle", CyclePlayer)
+player_factory.register("mcs", MCSPlayer)
 player_factory.register("mcts", MCTSPlayer)
 player_factory.register("expectimax", ExpectimaxPlayer)
 player_factory.register("minimax", MinimaxPlayer)

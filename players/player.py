@@ -12,12 +12,11 @@ class PlayerInterface(ABC):
         self.grid = grid
 
     @abstractmethod
-    def play(self, *args, **kwargs) -> bool:
+    def play(self) -> bool:
         """Make a move and return True if the grid has changed"""
         # example:
         # move = MoveFactory.create(MOVES.UP)
         # return self.grid.move(move)
-        raise NotImplementedError
 
 
 class AIPlayer(PlayerInterface):
@@ -26,7 +25,6 @@ class AIPlayer(PlayerInterface):
     @abstractmethod
     def evaluate(self, grid: Grid2048, move: Move = None, *args, **kwargs):
         """Returns the score of the grid."""
-        raise NotImplementedError
 
 
 class PlayerFactory:

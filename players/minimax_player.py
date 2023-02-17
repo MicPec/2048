@@ -1,8 +1,8 @@
 """AI player using Minimax algorithm"""
+import math
 from copy import deepcopy
-from random import shuffle
-from grid2048 import helpers
 
+from grid2048 import helpers
 from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 from players.player import AIPlayer
 
@@ -10,7 +10,7 @@ from players.player import AIPlayer
 class MinimaxPlayer(AIPlayer):
     """AI player using Minimax algorithm"""
 
-    depth = 5
+    depth = 4
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -43,7 +43,7 @@ class MinimaxPlayer(AIPlayer):
         if grid.no_moves or depth == 0:
             return self.evaluate(grid)
         if maximizing:
-            best_score = float("-inf")
+            best_score = -math.inf
             for direction in DIRECTION:
                 # new_grid, moved = self.move(grid, direction, True)
                 new_grid = deepcopy(grid)
@@ -54,7 +54,7 @@ class MinimaxPlayer(AIPlayer):
                 score = self.minimax(new_grid, depth - 1, False)
                 best_score = max(best_score, score)
         else:
-            best_score = float("inf")
+            best_score = math.inf
             for direction in DIRECTION:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
@@ -68,24 +68,16 @@ class MinimaxPlayer(AIPlayer):
 
     def evaluate(self, grid):
         """Return the score of the grid"""
-        max_val = helpers.max_tile(grid)
-        move_score = grid.last_move.score
-        high_val = max_val // 4 if max_val > 512 else 512
-        val_move_mean = helpers.values_mean(grid) / grid.moves
-
+        val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
+        zeros = helpers.zeros(grid) / (self.height * self.width)
+        max_tile = helpers.max_tile(grid)
         val = [
-            # # 0.1 * grid.score,
-            # 1 * helpers.grid_sum(grid),
-            helpers.zeros(grid),
-            0.1 * helpers.monotonicity2(grid),
-            # 2 * helpers.smoothness(grid),
-            # # helpers.pairs(grid, [2, 4, 8]),
-            # # 1.2 * helpers.pairs(grid, [32, 64, 128, 256]),
-            # # 1.4 * helpers.pairs(grid, [512, 1024, 2048, 4096]),
-            # 0.1 * helpers.higher_on_edge(grid),
-            # 0.1 * helpers.high_vals_in_corner(grid, helpers.max_tile(grid)),
-            # # helpers.max_tile(grid),
-            val_move_mean,
+            math.sqrt(
+                helpers.monotonicity2(grid) * helpers.smoothness(grid) * val_move_mean
+            )
+            / 50,
+            # helpers.higher_on_edge(grid) * math.log(2, max_tile) * val_move_mean / 100,
+            pow(2, val_move_mean * zeros),
         ]
-        print(val)
+        # print(val)
         return sum(val)

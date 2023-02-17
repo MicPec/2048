@@ -98,11 +98,12 @@ class MCTSNode:
 
 
 class MCTSPlayer(AIPlayer):
-    """AI player using Monte Carlo simulation"""
+    """AI player using Monte Carlo Tree Search algorithm"""
 
-    # Length of the simulation. How many times the simulation is run
     sim_length = 256
+    # Length of the simulation. How many times the simulation is run
 
+    rnd_steps = 0
     # Number of random steps to take before evaluating the grid.
     # Set to positive integer to evaluate the grid after a certain number of random moves.
     # Set to 0 to evaluate the grid after each move.
@@ -111,7 +112,6 @@ class MCTSPlayer(AIPlayer):
     # Also, make sure that the evaluation function will return proper values for the grid.
     # By defalut, the evaluation function returns the mean of the values multiplied by the number empty tiles,
     # so for terminal nodes, the return value will always be 0.
-    rnd_steps = 0
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
