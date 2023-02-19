@@ -77,7 +77,7 @@ class Grid2048:
         self.add_random_tile(self.get_empty_fields())
         self.state = STATE.IDLE
 
-    def get_empty_fields(self):
+    def get_empty_fields(self) -> list[tuple]:
         """Return a list of tuples containing the coordinates of empty fields"""
         return list(zip(*np.nonzero(self._grid == 0)))
 

@@ -1,3 +1,4 @@
+import itertools
 import unittest
 
 from grid2048.grid2048 import DIRECTION, STATE, Grid2048, MoveFactory
@@ -21,8 +22,8 @@ class TestGrid2048(unittest.TestCase):
 
     def test_getitem_setitem(self):
         grid = Grid2048(4, 4)
-        grid[0][0] = 2
-        self.assertEqual(grid[0][0], 2)
+        grid[0, 0] = 2
+        self.assertEqual(grid[0, 0], 2)
 
     def test_reset(self):
         grid = Grid2048(4, 4)
@@ -61,19 +62,17 @@ class TestGrid2048(unittest.TestCase):
     def test_no_moves_true(self):
         grid = Grid2048(4, 4)
         self.assertFalse(grid.no_moves)
-        for i in range(4):
-            for j in range(4):
-                # [[64,2,4,8],[2,4,8,16],[4,8,16,32],[8,16,32,64]]
-                grid[i][j] = 2 ** (i + j) if i + j > 0 else 64
+        for i, j in itertools.product(range(4), range(4)):
+            # [[64,2,4,8],[2,4,8,16],[4,8,16,32],[8,16,32,64]]
+            grid[i, j] = 2 ** (i + j) if i + j > 0 else 64
         self.assertTrue(grid.no_moves)
 
     def test_no_moves_false(self):
         grid = Grid2048(4, 4)
         self.assertFalse(grid.no_moves)
-        for i in range(4):
-            for j in range(4):
-                # [[2,2,2,2],[4,4,4,4],[8,8,8,8],[16,16,16,16]
-                grid[i][j] = 2 ** (i + 1)
+        for i, j in itertools.product(range(4), range(4)):
+            # [[2,2,2,2],[4,4,4,4],[8,8,8,8],[16,16,16,16]
+            grid[i, j] = 2 ** (i + 1)
         self.assertFalse(grid.no_moves)
 
 

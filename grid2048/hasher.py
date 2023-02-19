@@ -1,7 +1,7 @@
 import itertools
 from math import log
 
-from grid2048 import Grid2048
+from grid2048.grid2048 import Grid2048
 
 
 class Hasher:
@@ -13,7 +13,7 @@ class Hasher:
     def hash(self):
         h = []
         for row, col in itertools.product(range(4), range(4)):
-            tile = self.grid[row][col]
+            tile = self.grid[row, col]
             h.append(hex(int(log(tile if tile > 0 else 1, 2)))[2:])
         return "".join(h)
 
