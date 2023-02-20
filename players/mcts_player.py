@@ -11,7 +11,10 @@ from players.player import AIPlayer
 class MCTSNode:
     """Node in the Monte Carlo Tree Search tree"""
 
-    c = 3.52
+    c = 3.38
+    # Exploration/exploitation parameter
+    # Value is set experimentally and needs to be fine-tuned
+    # every time the evaluation function is changed
 
     def __init__(self, grid: Grid2048, direction: DIRECTION | None):
         self.direction = direction
