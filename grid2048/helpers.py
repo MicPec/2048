@@ -2,6 +2,7 @@
 from copy import deepcopy
 from itertools import product
 import math
+from typing import Any
 import numpy as np
 
 from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
@@ -17,7 +18,7 @@ def get_valid_moves(grid: Grid2048) -> list[DIRECTION]:
     return valid
 
 
-def normalize(values: list[any]) -> list[float]:
+def normalize(values: list[Any]) -> list[float]:
     """Normalize a list of numbers"""
     maxval = max(values)
     minval = min(values)
@@ -59,15 +60,17 @@ def smoothness(grid: Grid2048) -> float:
             smoothness_count += abs(grid[i, j] - grid[i + 1, j])
         if grid[i, j] != grid[i, j + 1] and grid[i, j] != 0 and grid[i, j + 1] != 0:
             smoothness_count += abs(grid[i, j] - grid[i, j + 1])
-    return (grid_size(grid) ** 2 / smoothness_count) if smoothness_count != 0 else 0
+    return (
+        (grid_size(grid) ** 2 / int(smoothness_count)) if smoothness_count != 0 else 0
+    )
 
 
-def pairs(grid: Grid2048, values: list[int] = list()) -> float:
+def pairs(grid: Grid2048, values: list[int] | None = None) -> float:
     """Returns the sum of the pairs in the grid
     divided by the number of cells in the grid.
     You can also specify the values of the pairs to count.
     That includes pairs with holes in between."""
-    if not values:
+    if values is None:
         values = [2**x for x in range(1, 16)]
     pairs_count = 0
     tmp = []
@@ -117,7 +120,7 @@ def high_vals_on_edge(grid: Grid2048, divider=256) -> float:
         if grid[i, j] >= divider:
             if i == 0 or j == 0 or i == grid.height - 1 or j == grid.width - 1:
                 high_vals += grid[i, j]
-    return high_vals / grid_size(grid)
+    return int(high_vals) / grid_size(grid)
 
 
 def high_vals_in_corner(grid: Grid2048, divider=256) -> float:
@@ -133,7 +136,7 @@ def high_vals_in_corner(grid: Grid2048, divider=256) -> float:
         corner_vals += grid[grid.height - 1, 0]
     if grid[grid.height - 1, grid.width - 1] >= divider:
         corner_vals += grid[grid.height - 1, grid.width - 1]
-    return corner_vals / grid_size(grid)
+    return int(corner_vals) / grid_size(grid)
 
 
 def higher_on_edge(grid: Grid2048) -> float:
@@ -151,7 +154,7 @@ def higher_on_edge(grid: Grid2048) -> float:
             higher += grid[i, j]
         if j == grid.width - 1 and grid[i, j] > grid[i, j - 1]:
             higher += grid[i, j]
-    return higher / grid_size(grid)
+    return int(higher) / grid_size(grid)
 
 
 def high_to_low(grid: Grid2048, divider=256) -> float:
@@ -271,12 +274,12 @@ def grid_sum(grid: Grid2048) -> int:
 
 def grid_size(grid: Grid2048) -> int:
     """Returns the number of cells in the grid."""
-    return grid.height * grid.width
+    return grid.data.size
 
 
 def grid_mean(grid: Grid2048) -> float:
     """Returns the mean of all cells in the grid."""
-    return np.mean(grid.data)
+    return float(np.mean(grid.data))
 
 
 def values_mean(grid: Grid2048) -> float:

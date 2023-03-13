@@ -3,9 +3,8 @@ import math
 from copy import deepcopy
 from random import choice
 
-from grid2048 import helpers
-from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
-from players.player import AIPlayer
+from grid2048 import DIRECTION, Grid2048, MoveFactory, helpers
+from players import AIPlayer
 
 
 class MCSPlayer(AIPlayer):
@@ -25,7 +24,7 @@ class MCSPlayer(AIPlayer):
 
     def get_best_move(self, grid) -> DIRECTION:
         # Initialize a dictionary to store the number of wins for each move
-        wins = {direction: 0 for direction in DIRECTION}
+        wins = {direction: 0.0 for direction in DIRECTION}
 
         for direction in DIRECTION:
             for _ in range(self.sim_count):
@@ -37,7 +36,6 @@ class MCSPlayer(AIPlayer):
         return max(wins, key=wins.get)  # type: ignore
 
     def simulate(self, grid):
-
         sim_n = 0
         while sim_n < self.sim_length:
             sim_n += 1
@@ -56,9 +54,9 @@ class MCSPlayer(AIPlayer):
         max_tile = helpers.max_tile(grid)
         val = [
             math.sqrt(
-                helpers.monotonicity2(grid) * helpers.smoothness(grid) * val_move_mean
+                helpers.monotonicity(grid) * helpers.smoothness(grid) * val_move_mean
             )
-            / 50,
+            / 25,
             helpers.higher_on_edge(grid) * math.log(2, max_tile) * val_move_mean / 100,
             pow(2, val_move_mean * zeros),
         ]

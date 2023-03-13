@@ -2,15 +2,14 @@
 import math
 from copy import deepcopy
 
-from grid2048 import helpers
-from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
-from players.player import AIPlayer
+from grid2048 import DIRECTION, Grid2048, Move, MoveFactory, helpers
+from players import AIPlayer
 
 
 class ExpectimaxPlayer(AIPlayer):
     """AI player using Expectimax algorithm""" ""
 
-    depth = 3
+    depth = 5
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -18,7 +17,7 @@ class ExpectimaxPlayer(AIPlayer):
         self.width = self.grid.width
 
     def play(self) -> bool:
-        move = MoveFactory.create(self.get_best_move(self.grid))
+        move = MoveFactory.create(self.get_best_move(self.grid))  # type: ignore
         return self.grid.move(move)
 
     def get_best_move(self, grid):
@@ -43,7 +42,7 @@ class ExpectimaxPlayer(AIPlayer):
         if depth == 0 or grid.no_moves:
             return self.evaluate(grid)
         if maximize is True:
-            best_value = float("-inf")
+            best_value = -math.inf
             for direction in DIRECTION:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
@@ -56,30 +55,25 @@ class ExpectimaxPlayer(AIPlayer):
         else:
             # random player
             values = []
-            # for direction in DIRECTION:
-            #     new_grid = deepcopy(grid)
-            #     move = MoveFactory.create(direction)
-            #     moved = new_grid.move(move, add_tile=True)
-            #     if not moved:
-            #         continue
-            #     values.append(self.expectimax(new_grid, depth - 1, True))
-            empty = grid.get_empty_fields()
-            for tile in empty:
+            for direction in DIRECTION:
                 new_grid = deepcopy(grid)
-                new_grid.data[tile[0]][tile[1]] = 2
+                move = MoveFactory.create(direction)
+                moved = new_grid.move(move, add_tile=True)
+                if not moved:
+                    continue
                 values.append(self.expectimax(new_grid, depth - 1, True))
             return sum(values) / len(values) if values else 0
 
-    def evaluate(self, grid):
+    def evaluate(self, grid, move: Move | None = None):
         """Return the score of the grid"""
         val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
         zeros = helpers.zeros(grid) / (self.height * self.width)
         max_tile = helpers.max_tile(grid)
         val = [
             math.sqrt(
-                helpers.monotonicity2(grid) * helpers.smoothness(grid) * val_move_mean
+                helpers.monotonicity(grid) * helpers.smoothness(grid) * val_move_mean
             )
-            / 50,
+            / 25,
             helpers.higher_on_edge(grid) * math.log(2, max_tile) * val_move_mean / 100,
             pow(2, val_move_mean * zeros),
         ]

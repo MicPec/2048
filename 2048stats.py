@@ -7,24 +7,17 @@ import os
 import time
 from datetime import datetime
 
-from grid2048 import helpers
-from grid2048.grid2048 import Grid2048
+import players
+from grid2048 import Grid2048, helpers
 from grid2048.hasher import Hasher
-from players.cycle_player import CyclePlayer
-from players.expectimax_player import ExpectimaxPlayer
-from players.mcs_player import MCSPlayer
-from players.mcts_player import MCTSPlayer
-from players.minimax_player import MinimaxPlayer
-from players.player import PlayerFactory
-from players.random_player import RandomPlayer
 
-player_factory = PlayerFactory()
-player_factory.register("random", RandomPlayer)
-player_factory.register("cycle", CyclePlayer)
-player_factory.register("mcts", MCTSPlayer)
-player_factory.register("mcs", MCSPlayer)
-player_factory.register("expectimax", ExpectimaxPlayer)
-player_factory.register("minimax", MinimaxPlayer)
+player_factory = players.PlayerFactory()
+player_factory.register("random", players.RandomPlayer)
+player_factory.register("cycle", players.CyclePlayer)
+player_factory.register("mcts", players.MCTSPlayer)
+player_factory.register("mcs", players.MCSPlayer)
+player_factory.register("expectimax", players.ExpectimaxPlayer)
+player_factory.register("minimax", players.MinimaxPlayer)
 
 
 WIDTH = 4
@@ -32,6 +25,17 @@ HEIGHT = 4
 
 
 class Stats:
+    """Play 2048 game and save stats to file.
+    usage: 2048stats.py [-h] [-p PLAYER] [-i ITER] [-f FILE] [-o OPEN]
+    options:
+    -h, --help          show this help message and exit
+    -p PLAYER, --player PLAYER
+                        player type
+    -i ITER, --iter ITER  number of iterations
+    -f FILE, --file FILE  stats file
+    -o OPEN, --open OPEN  open and show stats
+    """
+
     stats_dir = "stats"
     fields = ["player", "score", "max_tile", "moves", "time", "grid"]
 
@@ -139,7 +143,7 @@ def parse_cmd_args():
     ffile = args.file
     fopen = args.open
     iterations = args.iter or 10
-    if player not in player_factory.container.keys():
+    if player not in player_factory.container:
         raise ValueError(f"Invalid player type: {player!r}")
     return player, iterations, ffile, fopen
 

@@ -1,11 +1,14 @@
-Grid2048
+Grid2048 (with AI players)
 --------
 
 2048 game grid engine written for fun in Python. It can be used as a library or as a standalone game. It also has a Kivy GUI version.
 
 ![2048kivy.py](2048kivy.png)
 
-No dependencies for the engine and CLI game (pure Python). For Kivy version, Kivy must be installed of course.
+Dependencies:
+- Python 3.10+
+- NumPy
+- Kivy (for GUI version)
 
 ## Usage
 
@@ -35,7 +38,7 @@ grid = Grid2048(3, 6)  # Creates a 3x6 grid
 
 There is a possibility to add a custom player class. See `players/user_player.py` for example.
 In `players.py` module are abstract classes for `Player` and `AIPlayer`. You can implement your own player class by inheriting from them and overriding `play` method.
-Few example AI players are included: Monte Carlo Tree Search, Minimax and Expectimax: `mcts` ,`minimax`, `expectimax` respectively. 
+Few example AI players are included: Monte Carlo Simylation, Monte Carlo Tree Search, Minimax and Expectimax: `mcs`, `mcts` ,`minimax`, `expectimax` respectively. 
 Evaluation functions still need to be improved, but it's a good start.
 Also, there is a random player: `random` and `cycle` player that cycle through directions.
 
@@ -64,9 +67,11 @@ Also, you can set the width and height of the grid:
 python ./2048.py --rows 3 --cols 6
 ```
 
-## TODO
-- Evaluation functions for AI players still need to be improved.
-- Optimize the code.
-- Write the Cython version.
-  
+Also, you can conut the statistics of the player by running:
+```bash
+python ./2048stats.py -p mcs
+```
+Default game count is set to 10, but you can change it by passing `-i` argument.
+
+
 Have fun ;)

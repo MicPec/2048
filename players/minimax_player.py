@@ -2,9 +2,8 @@
 import math
 from copy import deepcopy
 
-from grid2048 import helpers
-from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
-from players.player import AIPlayer
+from grid2048 import DIRECTION, Grid2048, Move, MoveFactory, helpers
+from players import AIPlayer
 
 
 class MinimaxPlayer(AIPlayer):
@@ -18,11 +17,11 @@ class MinimaxPlayer(AIPlayer):
         self.width = self.grid.width
 
     def play(self, *args, **kwargs) -> bool:
-        move = MoveFactory.create(self.get_best_move(self.grid))
+        move = MoveFactory.create(self.get_best_move(self.grid))  # type: ignore
         return self.grid.move(move)
 
     def get_best_move(self, grid):
-        best_score = float("-inf")
+        best_score = -math.inf
         best_move = None
         for direction in DIRECTION:
             # new_grid, moved = self.move(grid, direction)
@@ -45,7 +44,6 @@ class MinimaxPlayer(AIPlayer):
         if maximizing:
             best_score = -math.inf
             for direction in DIRECTION:
-                # new_grid, moved = self.move(grid, direction, True)
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
                 moved = new_grid.move(move, add_tile=True)
@@ -61,19 +59,18 @@ class MinimaxPlayer(AIPlayer):
                 moved = new_grid.move(move, add_tile=True)
                 if not moved:
                     continue
-                # new_grid.add_random_tile(new_grid.get_empty_fields())
                 score = self.minimax(new_grid, depth - 1, True)
                 best_score = min(best_score, score)
         return best_score
 
-    def evaluate(self, grid):
+    def evaluate(self, grid, move: Move | None = None):
         """Return the score of the grid"""
         val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
         zeros = helpers.zeros(grid) / (self.height * self.width)
         max_tile = helpers.max_tile(grid)
         val = [
             math.sqrt(
-                helpers.monotonicity2(grid) * helpers.smoothness(grid) * val_move_mean
+                helpers.monotonicity(grid) * helpers.smoothness(grid) * val_move_mean
             )
             / 50,
             # helpers.higher_on_edge(grid) * math.log(2, max_tile) * val_move_mean / 100,

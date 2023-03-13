@@ -3,15 +3,14 @@ import math
 from copy import deepcopy
 from random import choice
 
-from grid2048 import helpers
-from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
-from players.player import AIPlayer
+from grid2048 import DIRECTION, Grid2048, Move, MoveFactory, helpers
+from players import AIPlayer
 
 
 class MCTSNode:
     """Node in the Monte Carlo Tree Search tree"""
 
-    c = 3.38
+    c = 3.42
     # Exploration/exploitation parameter
     # Value is set experimentally and needs to be fine-tuned
     # every time the evaluation function is changed
@@ -26,7 +25,7 @@ class MCTSNode:
         self.valid_moves = helpers.get_valid_moves(self.grid)
 
     def __str__(self) -> str:
-        return f"{'Root' if self.parent is None else 'Node'} (dir:{self.direction}, vis:{self.visits}, val:{self.value}, dph:{self.depth},'uct:{self.uct}', children:{len(self.children)})"
+        return f"<MCTSNode> dir:{self.direction}, vis:{self.visits}, val:{self.value}, dph:{self.depth},'uct:{self.uct}', children:{len(self.children)})"
 
     @property
     def depth(self) -> int:
@@ -41,7 +40,7 @@ class MCTSNode:
     def uct(self) -> float:
         return (
             self.value / self.visits
-            + self.c * math.sqrt(2 * math.log(self.parent.visits) / self.visits)
+            + self.c * math.sqrt(2 * math.log(self.parent.visits) / self.visits)  # type: ignore
             if self.visits > 0
             else math.inf
         )
@@ -49,7 +48,7 @@ class MCTSNode:
     @property
     def rave(self):
         return (
-            (self.value + self.parent.value) / (self.visits + self.parent.visits)
+            (self.value + self.parent.value) / (self.visits + self.parent.visits)  # type: ignore
             if self.visits > 0
             else math.inf
         )
@@ -144,7 +143,7 @@ class MCTSPlayer(AIPlayer):
         direction = max(self.root.children, key=lambda x: x.visits).direction
         return direction
 
-    def evaluate(self, grid) -> float:
+    def evaluate(self, grid, move: Move | None = None) -> float:
         """Return the score of the grid"""
         val_mean = helpers.values_mean(grid)
         mean = helpers.grid_mean(grid)

@@ -1,14 +1,14 @@
-import itertools
-from copy import deepcopy
-import numpy as np
+"""Grid2048 module. Contains the Grid2048 class and the Move class."""
 from enum import Enum
 from random import choice, choices
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
+
+import numpy as np
 
 STATE = Enum("STATE", "IDLE RUNNING")
 DIRECTION = Enum("DIRECTION", "UP DOWN LEFT RIGHT")
 
-Grid2048 = TypeVar("Grid2048")
+# Grid2048 = TypeVar("Grid2048")
 Move = TypeVar("Move")
 
 
@@ -20,7 +20,7 @@ class Grid2048:
         self._last_move = None
         self.width = width
         self.height = height
-        self._grid = np.ndarray
+        self._grid = np.array([])
         self.reset()
 
     def __str__(self):
@@ -31,9 +31,9 @@ class Grid2048:
         s = "\n" + "-" * (l + 1) * self.width + "-\n"
         for row in self._grid:
             s += "|"
-            for col in row:
-                strcol = str(col).center(l) if col > 0 else " "
-                s += f"{strcol:{l}}|"
+            for tile in row:
+                strtile = f"{tile: ^{l}}" if tile > 0 else " "
+                s += f"{strtile:{l}}|"
             s += "\n" + "-" * (l + 1) * self.width + "-\n"
         return s
 
@@ -77,11 +77,11 @@ class Grid2048:
         self.add_random_tile(self.get_empty_fields())
         self.state = STATE.IDLE
 
-    def get_empty_fields(self) -> list[tuple]:
+    def get_empty_fields(self) -> list[tuple[Any]]:
         """Return a list of tuples containing the coordinates of empty fields"""
         return list(zip(*np.nonzero(self._grid == 0)))
 
-    def add_random_tile(self, empty_fields: np.ndarray) -> None:
+    def add_random_tile(self, empty_fields: list) -> None:
         """Add a random tile to the grid"""
         if len(empty_fields) > 0:
             row, col = choice(empty_fields)
@@ -242,7 +242,7 @@ class MoveFactory:
     def create(cls, direction: DIRECTION):
         try:
             return Move(direction, cls.move_directions[direction.name])
-        except KeyError:
-            raise ValueError("Invalid direction")
-        except Exception as e:
-            raise e
+        except KeyError as exc:
+            raise ValueError("Invalid direction") from exc
+        except Exception as exc:
+            raise exc

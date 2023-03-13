@@ -1,48 +1,35 @@
 #!/usr/bin/env python3
+import argparse
+import itertools
 import os
 
 # os.environ["KIVY_NO_CONSOLELOG"] = "1"
 os.environ["KIVY_NO_ARGS"] = "1"
-import argparse
 
 import kivy
-
-from players.cycle_player import CyclePlayer
-from players.expectimax_player import ExpectimaxPlayer
-from players.mcts_player import MCTSPlayer
-from players.mcs_player import MCSPlayer
-from players.minimax_player import MinimaxPlayer
-from players.player import PlayerFactory
-from players.random_player import RandomPlayer
-from players.user_player import KivyPlayer
-
-kivy.require("2.1.0")
-
-from kivy.config import Config
-
-Config.set("graphics", "resizable", "0")
-
-
-import itertools
-
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.config import Config
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
-from grid2048.grid2048 import STATE, Grid2048
+import players
+from grid2048 import STATE, Grid2048
 
-player_factory = PlayerFactory()
-player_factory.register("user", KivyPlayer)
-player_factory.register("random", RandomPlayer)
-player_factory.register("cycle", CyclePlayer)
-player_factory.register("mcts", MCTSPlayer)
-player_factory.register("mcs", MCSPlayer)
-player_factory.register("expectimax", ExpectimaxPlayer)
-player_factory.register("minimax", MinimaxPlayer)
+kivy.require("2.1.0")
+Config.set("graphics", "resizable", "0")
+
+player_factory = players.PlayerFactory()
+player_factory.register("user", players.KivyPlayer)
+player_factory.register("random", players.RandomPlayer)
+player_factory.register("cycle", players.CyclePlayer)
+player_factory.register("mcts", players.MCTSPlayer)
+player_factory.register("mcs", players.MCSPlayer)
+player_factory.register("expectimax", players.ExpectimaxPlayer)
+player_factory.register("minimax", players.MinimaxPlayer)
 
 
 COLORS = {
@@ -116,14 +103,11 @@ class Grid(GridLayout):
             self.parent.update_score(self.game_board.score)
             if self.game_board.no_moves:
                 self.parent.game_over()
-        # print(self.game_board)
 
     def play(self, **kwargs):
         if self.game_board.state == STATE.RUNNING or self.game_board.no_moves:
             return
         moved = self.player.play(**kwargs)
-        # if not moved and not self.game_board.no_moves and player != "user":
-        #     self.play(**kwargs)
         if moved:
             self.update_widgets()
 

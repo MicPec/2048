@@ -23,7 +23,7 @@ class AIPlayer(PlayerInterface):
     """Abstract base class for AI players"""
 
     @abstractmethod
-    def evaluate(self, grid: Grid2048, move: Move = None):  # type: ignore
+    def evaluate(self, grid: Grid2048, move: Move | None = None):
         """Returns the score of the grid."""
 
 
