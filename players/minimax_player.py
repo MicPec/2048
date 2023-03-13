@@ -1,6 +1,7 @@
 """AI player using Minimax algorithm"""
 import math
 from copy import deepcopy
+from grid2048 import helpers
 
 from grid2048 import DIRECTION, Grid2048, Move, MoveFactory, helpers
 from players import AIPlayer
@@ -32,13 +33,16 @@ class MinimaxPlayer(AIPlayer):
                 return direction
             if not moved:
                 continue
-            score = self.minimax(new_grid, self.depth, True)
+            score = self.minimax(
+                new_grid, float("-inf"), float("inf"), self.depth, True
+            )
             if score > best_score:
                 best_score = score
                 best_move = direction
         return best_move
 
-    def minimax(self, grid, depth, maximizing):
+    def minimax(self, grid, alpha, beta, depth, maximizing):
+        """Return the best score for the grid"""
         if grid.no_moves or depth == 0:
             return self.evaluate(grid)
         if maximizing:
@@ -49,8 +53,11 @@ class MinimaxPlayer(AIPlayer):
                 moved = new_grid.move(move, add_tile=True)
                 if not moved:
                     continue
-                score = self.minimax(new_grid, depth - 1, False)
-                best_score = max(best_score, score)
+                score = self.minimax(new_grid, alpha, beta, depth - 1, False)
+                alpha = max(alpha, score)
+                if alpha >= beta:  # beta cut-off
+                    break
+            return alpha
         else:
             best_score = math.inf
             for direction in DIRECTION:
@@ -59,15 +66,19 @@ class MinimaxPlayer(AIPlayer):
                 moved = new_grid.move(move, add_tile=True)
                 if not moved:
                     continue
-                score = self.minimax(new_grid, depth - 1, True)
-                best_score = min(best_score, score)
-        return best_score
+                # new_grid.add_random_tile(new_grid.get_empty_fields())
+                score = self.minimax(new_grid, alpha, beta, depth - 1, True)
+                beta = min(beta, score)
+                if alpha >= beta:  # alpha cut-off
+                    break
+            return beta
 
     def evaluate(self, grid, move: Move | None = None):
         """Return the score of the grid"""
-        val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
-        zeros = helpers.zeros(grid) / (self.height * self.width)
-        max_tile = helpers.max_tile(grid)
+        max_val = helpers.max_tile(grid)
+        move_score = grid.last_move.score
+        edge_val = max_val // 2 if max_val > 256 else 256
+
         val = [
             math.sqrt(
                 helpers.monotonicity(grid) * helpers.smoothness(grid) * val_move_mean
