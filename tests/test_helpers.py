@@ -53,7 +53,7 @@ class TestHelpers(unittest.TestCase):
         grid.data = np.array(
             [[2, 0, 0, 2], [2, 0, 2048, 2], [2, 1024, 0, 2], [2, 0, 0, 2]]
         )
-        self.assertAlmostEqual(smoothness(grid), 0.1, 1)
+        self.assertAlmostEqual(smoothness(grid), 1.0, 1)
 
     def test_pairs(self):
         grid = Grid2048(4, 4)

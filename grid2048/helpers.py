@@ -60,9 +60,7 @@ def smoothness(grid: Grid2048) -> float:
             smoothness_count += abs(grid[i, j] - grid[i + 1, j])
         if grid[i, j] != grid[i, j + 1] and grid[i, j] != 0 and grid[i, j + 1] != 0:
             smoothness_count += abs(grid[i, j] - grid[i, j + 1])
-    return (
-        (grid_size(grid) ** 2 / int(smoothness_count)) if smoothness_count != 0 else 0
-    )
+    return (np.sum(grid.data) / int(smoothness_count)) if smoothness_count != 0 else 0
 
 
 def pairs(grid: Grid2048, values: list[int] | None = None) -> float:
@@ -117,9 +115,10 @@ def high_vals_on_edge(grid: Grid2048, divider=256) -> float:
     for i, j in product(range(grid.height), range(grid.width)):
         if grid[i, j] == 0:
             continue
-        if grid[i, j] >= divider:
-            if i == 0 or j == 0 or i == grid.height - 1 or j == grid.width - 1:
-                high_vals += grid[i, j]
+        if grid[i, j] >= divider and (
+            i == 0 or j == 0 or i == grid.height - 1 or j == grid.width - 1
+        ):
+            high_vals += grid[i, j]
     return int(high_vals) / grid_size(grid)
 
 
