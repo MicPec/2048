@@ -45,7 +45,7 @@ def main() -> None:
         print(f"score: {game.grid.score}")
         moved = game.player.play()
         if not moved:
-            print("Invalid move")
+            print("\x1b[HInvalid move")
     print("\n#############\n# GAME OVER #\n#############\n")
     print("Your score: ", game.grid.score)
     print("in ", game.grid.moves, " moves")
