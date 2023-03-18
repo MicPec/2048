@@ -58,7 +58,7 @@ class MCSPlayer(AIPlayer):
             math.sqrt(helpers.higher_on_edge(grid) / mean) * key,
             helpers.monotonicity(grid) * key,
             # helpers.smoothness(grid) * key,
-            zeros / val_mean * helpers.grid_sum(grid) / key * 1.5,
+            zeros / val_mean * helpers.grid_sum(grid) / key * 2,
         ]
         # print(val)
         return sum(val)
