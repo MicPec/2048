@@ -3,7 +3,9 @@ import argparse
 import itertools
 import os
 
-# os.environ["KIVY_NO_CONSOLELOG"] = "1"
+from players.user_player import KivyPlayer
+
+os.environ["KIVY_NO_CONSOLELOG"] = "1"
 os.environ["KIVY_NO_ARGS"] = "1"
 
 import kivy
@@ -16,21 +18,15 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 
-import players
+# import players
+from players import player_factory
 from grid2048 import STATE, Grid2048
 
 kivy.require("2.1.0")
 Config.set("graphics", "resizable", "0")
 
-player_factory = players.PlayerFactory()
-player_factory.register("user", players.KivyPlayer)
-player_factory.register("random", players.RandomPlayer)
-player_factory.register("cycle", players.CyclePlayer)
-player_factory.register("mcts", players.MCTSPlayer)
-player_factory.register("mcs", players.MCSPlayer)
-player_factory.register("expectimax", players.ExpectimaxPlayer)
-player_factory.register("minimax", players.MinimaxPlayer)
-
+# register KivyPlayer instead of UserPlayer
+player_factory.register("user", KivyPlayer)
 
 COLORS = {
     "0": (0.808, 0.757, 0.710, 1.0),
@@ -192,6 +188,8 @@ class Game2048App(App):
         height = args.rows or 4
         player = args.player or "user"
         if player not in player_factory.container.keys():
+            # workaround for Kivy won't show the error messags when console is off
+            print(f"Invalid player type: {player!r}")
             raise ValueError(f"Invalid player type: {player!r}")
         print(f"Starting game with {width}x{height} grid and {player!r} player")
         Window.size = width * 100, height * 100 + 80

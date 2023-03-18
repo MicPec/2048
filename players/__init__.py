@@ -6,3 +6,12 @@ from .mcts_player import MCTSPlayer
 from .minimax_player import MinimaxPlayer
 from .random_player import RandomPlayer
 from .user_player import UserPlayer, KivyPlayer
+
+player_factory = PlayerFactory()
+player_factory.register("user", UserPlayer)
+player_factory.register("random", RandomPlayer)
+player_factory.register("cycle", CyclePlayer)
+player_factory.register("mcts", MCTSPlayer)
+player_factory.register("mcs", MCSPlayer)
+player_factory.register("expectimax", ExpectimaxPlayer)
+player_factory.register("minimax", MinimaxPlayer)

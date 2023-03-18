@@ -7,18 +7,12 @@ import os
 import time
 from datetime import datetime
 
-import players
 from grid2048 import Grid2048, helpers
 from grid2048.hasher import Hasher
+from players import player_factory
 
-player_factory = players.PlayerFactory()
-player_factory.register("random", players.RandomPlayer)
-player_factory.register("cycle", players.CyclePlayer)
-player_factory.register("mcts", players.MCTSPlayer)
-player_factory.register("mcs", players.MCSPlayer)
-player_factory.register("expectimax", players.ExpectimaxPlayer)
-player_factory.register("minimax", players.MinimaxPlayer)
-
+# disable user player for stats
+del player_factory.container["user"]
 
 WIDTH = 4
 HEIGHT = 4

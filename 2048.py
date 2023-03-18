@@ -2,21 +2,11 @@
 """2048 game using the grid2048 library"""
 import argparse
 
-import players
 from grid2048 import Grid2048
-
+from players import player_factory
 
 WIDTH = 4
 HEIGHT = 4
-
-player_factory = players.PlayerFactory()
-player_factory.register("user", players.UserPlayer)
-player_factory.register("random", players.RandomPlayer)
-player_factory.register("cycle", players.CyclePlayer)
-player_factory.register("mcs", players.MCSPlayer)
-player_factory.register("mcts", players.MCTSPlayer)
-player_factory.register("expectimax", players.ExpectimaxPlayer)
-player_factory.register("minimax", players.MinimaxPlayer)
 
 
 class Game:
@@ -47,7 +37,10 @@ def main() -> None:
     print(f"Starting game with {width}x{height} grid and {player!r} player")
     # Start game
     game = Game(width, height, player)
+    print("\033[H\033[J")
     while not game.game_over():
+        print("\033[H\033[J")
+        # print("\x1b[H")
         print(game.grid)
         print(f"score: {game.grid.score}")
         moved = game.player.play()

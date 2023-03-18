@@ -75,6 +75,7 @@ class Grid2048:
         self.score = 0
         self.moves = 0
         self.add_random_tile(self.get_empty_fields())
+        self.add_random_tile(self.get_empty_fields())
         self.state = STATE.IDLE
 
     def get_empty_fields(self) -> list[tuple[Any]]:
