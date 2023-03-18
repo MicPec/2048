@@ -76,23 +76,43 @@ class Stats:
 
     def print_stats(self, stats):
         """Print stats to console"""
-        print(f"Total games: {len(stats)}")
-        print(f"Total time: {sum(float(s['time']) for s in stats)/60:.2f} min.")
+        print(f"Total games: {len(stats):>9}")
+        print(f"Total time: {sum(float(s['time']) for s in stats) / 60:>14.2f} min.")
         print(
-            f"Mean time: {sum(float(s['time']) for s in stats) / len(stats):.2f} sec."
+            f"Mean time: {sum(float(s['time']) for s in stats) / len(stats) / 60:>13.2f} min."
         )
         print(
-            f"Mean move time: {sum(float(s['time']) for s in stats) / sum(int(s['moves']) for s in stats):.2f} sec."
+            f"Mean move time: {sum(float(s['time']) for s in stats) / sum(int(s['moves']) for s in stats):>8.2f} sec."
         )
-        print(f"Max tile: {max(int(s['max_tile']) for s in stats)}")
-        print(f"Max score: {max(int(s['score']) for s in stats)}")
-        print(f"Min score: {min(int(s['score']) for s in stats)}")
-        print(f"Average score: {sum(int(s['score']) for s in stats) / len(stats):.0f}")
-        print(f"Average moves: {sum(int(s['moves']) for s in stats) / len(stats):.0f}")
-        print(f"Wins count: {len([s for s in stats if int(s['max_tile']) >= 2048])}")
+
+        print("-" * 30)
+        print(f"Max score: {max(int(s['score']) for s in stats):>14}")
+        print(f"Min score: {min(int(s['score']) for s in stats):>13}")
         print(
-            f"Percentage of wins: {len([s for s in stats if int(s['max_tile']) >= 2048]) / len(stats) * 100:.2f}%"
+            f"Average score: {sum(int(s['score']) for s in stats) / len(stats):>10.0f}"
         )
+        print("-" * 30)
+        print(f"Max moves: {max(int(s['moves']) for s in stats):>13}")
+        print(f"Min moves: {min(int(s['moves']) for s in stats):>12}")
+        print(
+            f"Average moves: {sum(int(s['moves']) for s in stats) / len(stats):>9.0f}"
+        )
+        print("-" * 30)
+        print(
+            f"Wins count: {len([s for s in stats if int(s['max_tile']) >= 2048]):>10}"
+        )
+        print(
+            f"Percentage of wins: {len([s for s in stats if int(s['max_tile']) >= 2048]) / len(stats) * 100:>3.2f}%"
+        )
+        # print(f"Max tile: {max(int(s['max_tile']) for s in stats):>14}")
+        print("-" * 30)
+        print(f"{'Max tile:':>6} {'count':>8} (percentage):")
+        max_tile_count = {2**i: 0 for i in range(1, 16)}
+        for s in stats:
+            max_tile_count[int(s["max_tile"])] += 1
+        for tile, count in max_tile_count.items():
+            if count:
+                print(f"{tile:>8}: {count:>8} ({count / len(stats) * 100:.2f}%)")
 
     def run(self, iterations: int) -> None:
         """Run the simulation certain number of iterations"""
