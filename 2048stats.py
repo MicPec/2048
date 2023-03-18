@@ -154,11 +154,11 @@ def parse_cmd_args():
     parser.add_argument("-o", "--open", type=str, help="open and show stats")
     args = parser.parse_args()
     player = args.player or "random"
+    if player not in player_factory.container:
+        raise ValueError(f"Invalid player type: {player!r}")
     ffile = args.file
     fopen = args.open
     iterations = args.iter or 10
-    if player not in player_factory.container:
-        raise ValueError(f"Invalid player type: {player!r}")
     return player, iterations, ffile, fopen
 
 
