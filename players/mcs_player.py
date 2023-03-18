@@ -11,7 +11,7 @@ class MCSPlayer(AIPlayer):
     """AI player using Monte Carlo simulation"""
 
     sim_length = 5  # maximum length to simulate
-    sim_count = 100  # number of simulations to run for each move
+    sim_count = 200  # number of simulations to run for each move
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -49,16 +49,16 @@ class MCSPlayer(AIPlayer):
 
     def evaluate(self, grid):
         """Return the score of the grid"""
-        val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
+        val_mean = helpers.values_mean(grid)
+        mean = helpers.grid_mean(grid)
         zeros = helpers.zeros(grid) / (self.height * self.width)
-        max_tile = helpers.max_tile(grid)
+        sum_steps = helpers.grid_sum(grid) / grid.moves if grid.moves > 0 else 0
+        key = math.log(math.pow(2, sum_steps))
         val = [
-            math.sqrt(
-                helpers.monotonicity(grid) * helpers.smoothness(grid) * val_move_mean
-            )
-            / 25,
-            helpers.higher_on_edge(grid) * math.log(2, max_tile) * val_move_mean / 100,
-            pow(2, val_move_mean * zeros),
+            math.sqrt(helpers.higher_on_edge(grid) / mean) * key,
+            helpers.monotonicity(grid) * key,
+            # helpers.smoothness(grid) * key,
+            zeros / val_mean * helpers.grid_sum(grid) / key * 1.5,
         ]
         # print(val)
         return sum(val)
