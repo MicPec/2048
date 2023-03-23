@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import argparse
 
-# from grid2048.hasher import Hasher
 import csv
 import os
 import time
 from datetime import datetime
+from multiprocessing import Pool
 
 from grid2048 import Grid2048, helpers
 from grid2048.hasher import Hasher
@@ -33,7 +33,7 @@ class Stats:
     stats_dir = "stats"
     fields = ["player", "score", "max_tile", "moves", "time", "grid"]
 
-    def __init__(self, player: str | None = None, filename: str | None = None):
+    def __init__(self, player: str | None = None, filename: str | None = None) -> None:
         self.player = player
         if not filename:
             self.filename = self._get_filename(player)
@@ -41,12 +41,14 @@ class Stats:
         if filename and self.file_exists(filename):
             self.filename = filename
         else:
-            raise FileNotFoundError(f"File {filename!r} not found.")
+            f = f"{filename}.csv"
+            self.filename = os.path.join(self.stats_dir, f)
+        #     raise FileNotFoundError(f"File {filename!r} not found.")
 
-    def file_exists(self, filename):
+    def file_exists(self, filename: str) -> bool:
         return os.path.exists(filename)
 
-    def _get_filename(self, ai_player):
+    def _get_filename(self, ai_player: str | None = None) -> str:
         """Generate filename for stats"""
         dt = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         f = f"{dt}_{ai_player}.csv"
@@ -62,13 +64,13 @@ class Stats:
                 writer.writerow({fn: fn for fn in self.fields})
             writer.writerow(stats)
 
-    def load_stats(self, filenme) -> list:
+    def load_stats(self, filenme: str) -> list:
         """Load stats from file"""
         with open(filenme, mode="r", newline="") as f:
             reader = csv.DictReader(f)
             return [dict(r) for r in reader]
 
-    def print_stats(self, stats):
+    def print_stats(self, stats: list) -> None:
         """Print stats to console"""
         print(f"Total games: {len(stats):>9}")
         print(f"Total time: {sum(float(s['time']) for s in stats) / 60:>14.2f} min.")
@@ -108,44 +110,40 @@ class Stats:
             if count:
                 print(f"{tile:>8}: {count:>8} ({count / len(stats) * 100:.2f}%)")
 
-    def run(self, iterations: int) -> None:
+    def run(self, iteration: int) -> None:
         """Run the simulation certain number of iterations"""
         if not self.player:
             raise ValueError("Player type not specified.")
+        stime = time.time()
+        grid = Grid2048(WIDTH, HEIGHT)
+        player = player_factory.create(self.player, grid)
+        while not grid.no_moves:
+            print("\t" * (iteration), f"{iteration+1}:{grid.score}", end="\r")
+            player.play()
+            # print(grid)
+        etime = time.time() - stime
+        self.process_stats(iteration, grid, etime)
+        return
+
+    def process_stats(self, iteration: int, grid: Grid2048, etime: float) -> None:
+        h = Hasher(grid)
+        stat = {
+            "player": self.player,
+            "score": grid.score,
+            "max_tile": helpers.max_tile(grid),
+            "moves": grid.moves,
+            "time": etime,
+            "grid": h.hash(),
+        }
+        self.save_stats(stat)
+        print(grid)
         print(
-            f"Starting {iterations} games with {WIDTH}x{HEIGHT} grid and {self.player!r} player"
+            f"Game: {iteration} | score: {grid.score} | max tile: {helpers.max_tile(grid)} | moves: {grid.moves}",
+            end="\n\n",
         )
-        stat = {}
-        for i in range(iterations):
-            stime = time.time()
-            grid = Grid2048(WIDTH, HEIGHT)
-            player = player_factory.create(self.player, grid)
-            while not grid.no_moves:
-                print(
-                    f"Game: {i+1}/{iterations} | score: {grid.score} | max tile: {helpers.max_tile(grid)} | moves: {grid.moves}\r",
-                    end="",
-                )
-                player.play()
-                # print(grid)
-            etime = time.time() - stime
-            h = Hasher(grid)
-            stat = {
-                "player": self.player,
-                "score": grid.score,
-                "max_tile": helpers.max_tile(grid),
-                "moves": grid.moves,
-                "time": etime,
-                "grid": h.hash(),
-            }
-            self.save_stats(stat)
-            print(grid)
-        stats = self.load_stats(self.filename)
-        print("*" * 80)
-        self.print_stats(stats)
-        print(f"Stats saved to {self.filename!r}")
 
 
-def parse_cmd_args():
+def parse_cmd_args() -> tuple[str, int, str | None, str | None]:
     """Parse command line arguments"""
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--player", type=str, help="player type")
@@ -158,7 +156,7 @@ def parse_cmd_args():
         raise ValueError(f"Invalid player type: {player!r}")
     ffile = args.file
     fopen = args.open
-    iterations = args.iter or 10
+    iterations = int(args.iter or 10)
     return player, iterations, ffile, fopen
 
 
@@ -170,8 +168,17 @@ def main() -> None:
         stats.print_stats(stats.load_stats(fopen))
         return
     # Start the game
+    print(
+        f"Starting {iterations} games with {WIDTH}x{HEIGHT} grid and {player!r} player"
+    )
     stats = Stats(player, ffile)
-    stats.run(iterations)
+    with Pool(8) as pool:
+        pool.map(stats.run, range(iterations))
+
+    print("*" * 80)
+    print(f"Stats saved to {stats.filename!r}")
+    print("-" * 30)
+    stats.print_stats(stats.load_stats(stats.filename))
 
 
 if __name__ == "__main__":
