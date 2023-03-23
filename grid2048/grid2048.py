@@ -84,7 +84,7 @@ class Grid2048:
 
     def add_random_tile(self, empty_fields: list) -> None:
         """Add a random tile to the grid"""
-        if len(empty_fields) > 0:
+        if empty_fields:
             row, col = choice(empty_fields)
             self._grid[row, col] = choices([2, 4], [0.9, 0.1])[0]
 
