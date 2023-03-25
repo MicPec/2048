@@ -158,7 +158,7 @@ def parse_cmd_args() -> tuple[str, int, int, str | None, str | None]:
     ffile = args.file
     fopen = args.open
     iterations = int(args.iter or 10)
-    cores = int(args.cores) if args.cores else multiprocessing.cpu_count()
+    cores = int(args.cores) if args.cores else multiprocessing.cpu_count() // 2
     return (player, iterations, cores, ffile, fopen)
 
 
