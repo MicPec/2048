@@ -10,9 +10,9 @@ from players import AIPlayer
 class MCTSNode:
     """Node in the Monte Carlo Tree Search tree"""
 
-    c = 3.42
+    c = 35
     # Exploration/exploitation parameter
-    # Value is set experimentally and needs to be fine-tuned
+    # Value is set experimentally and needs to be fine-tuned/balanced
     # every time the evaluation function is changed
 
     def __init__(self, grid: Grid2048, direction: DIRECTION | None):
@@ -38,6 +38,9 @@ class MCTSNode:
 
     @property
     def uct(self) -> float:
+        # print(
+        #     f"exploration: {self.value / self.visits if self.visits > 0 else math.inf:<8.2f} exploitation: {self.c * math.sqrt(2 * math.log(self.parent.visits) / self.visits  if self.visits > 0 else math.inf):<8.2f}"
+        # )
         return (
             self.value / self.visits
             + self.c * math.sqrt(2 * math.log(self.parent.visits) / self.visits)  # type: ignore
@@ -98,7 +101,7 @@ class MCTSNode:
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo Tree Search algorithm"""
 
-    sim_length = 256
+    sim_length = 200
     # Length of the simulation. How many times the simulation is run
 
     rnd_steps = 3
@@ -127,15 +130,15 @@ class MCTSPlayer(AIPlayer):
         for _ in range(self.sim_length):
             node = self.root.get_best_child()
             if node.is_terminal:
-                score = -2 / math.sqrt(node.depth)
-                node.update(score)
-                node.backpropagate(score)
-                continue
-            child = node.expand()
-            score = self.evaluate(child.simulate(self.rnd_steps))
-            child.update(score)
-            child.backpropagate(score)
+                score = -1
+            else:
+                child = node.expand()
+                score = self.evaluate(child.simulate(self.rnd_steps))
+                child.update(score)
+                child.backpropagate(score)
 
+            node.update(score)
+            node.backpropagate(score)
         return self.select_move()
 
     def select_move(self) -> DIRECTION:
@@ -146,14 +149,19 @@ class MCTSPlayer(AIPlayer):
     def evaluate(self, grid, move: Move | None = None) -> float:
         """Return the score of the grid"""
         val_mean = helpers.values_mean(grid)
-        mean = helpers.grid_mean(grid)
         zeros = helpers.zeros(grid) / (self.height * self.width)
-        sum_steps = helpers.grid_sum(grid) / grid.moves if grid.moves > 0 else 0
-        key = math.log(math.pow(2, sum_steps))
+        grid_sum = helpers.grid_sum(grid)
+        sum_steps = grid_sum / grid.moves * 0.75 if grid.moves > 0 else 0
+        max_tile = helpers.max_tile(grid)
+        max_in_corner = helpers.high_vals_in_corner(grid, max_tile)
+        high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
         val = [
-            math.sqrt(helpers.higher_on_edge(grid) / mean) * key,
-            helpers.monotonicity(grid) * key,
-            zeros / val_mean * helpers.grid_sum(grid) / 3,
+            math.log(high_on_edge if high_on_edge > 0 else 1),
+            math.log(max_in_corner if max_in_corner > 0 else 1) / 2,
+            helpers.monotonicity(grid) * sum_steps * 4,
+            helpers.smoothness(grid) * sum_steps * 2,
+            zeros * math.log2(max_tile) * sum_steps / 2,
+            val_mean / math.log2(max_tile) * 2,
         ]
         # print(val)
         return sum(val)
