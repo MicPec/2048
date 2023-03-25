@@ -5,7 +5,7 @@ import csv
 import os
 import time
 from datetime import datetime
-from multiprocessing import Pool
+import multiprocessing
 
 from grid2048 import Grid2048, helpers
 from grid2048.hasher import Hasher
@@ -143,13 +143,14 @@ class Stats:
         )
 
 
-def parse_cmd_args() -> tuple[str, int, str | None, str | None]:
+def parse_cmd_args() -> tuple[str, int, int, str | None, str | None]:
     """Parse command line arguments"""
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--player", type=str, help="player type")
     parser.add_argument("-i", "--iter", type=str, help="number of iterations")
     parser.add_argument("-f", "--file", type=str, help="stats file")
     parser.add_argument("-o", "--open", type=str, help="open and show stats")
+    parser.add_argument("-c", "--cores", type=str, help="how many cores to use")
     args = parser.parse_args()
     player = args.player or "random"
     if player not in player_factory.container:
@@ -157,11 +158,12 @@ def parse_cmd_args() -> tuple[str, int, str | None, str | None]:
     ffile = args.file
     fopen = args.open
     iterations = int(args.iter or 10)
-    return player, iterations, ffile, fopen
+    cores = int(args.cores) if args.cores else multiprocessing.cpu_count()
+    return (player, iterations, cores, ffile, fopen)
 
 
 def main() -> None:
-    player, iterations, ffile, fopen = parse_cmd_args()
+    player, iterations, cores, ffile, fopen = parse_cmd_args()
 
     if fopen:  # Show stats from file
         stats = Stats(filename=fopen)
@@ -172,7 +174,8 @@ def main() -> None:
         f"Starting {iterations} games with {WIDTH}x{HEIGHT} grid and {player!r} player"
     )
     stats = Stats(player, ffile)
-    with Pool(8) as pool:
+    # TODO: refactor this
+    with multiprocessing.Pool(cores) as pool:
         pool.map(stats.run, range(iterations))
 
     print("*" * 80)
