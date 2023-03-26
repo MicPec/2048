@@ -50,15 +50,17 @@ class MCSPlayer(AIPlayer):
     def evaluate(self, grid):
         """Return the score of the grid"""
         val_mean = helpers.values_mean(grid)
-        mean = helpers.grid_mean(grid)
         zeros = helpers.zeros(grid) / (self.height * self.width)
-        sum_steps = helpers.grid_sum(grid) / grid.moves if grid.moves > 0 else 0
-        key = math.log(math.pow(2, sum_steps))
+        grid_sum = helpers.grid_sum(grid)
+        sum_steps = grid_sum / grid.moves * 0.75 if grid.moves > 0 else 0
+        max_tile = helpers.max_tile(grid)
+        high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
         val = [
-            math.sqrt(helpers.higher_on_edge(grid) / mean) * key,
-            helpers.monotonicity(grid) * key,
-            # helpers.smoothness(grid) * key,
-            zeros / val_mean * helpers.grid_sum(grid) / key * 2,
+            math.log(high_on_edge if high_on_edge > 0 else 1),
+            helpers.monotonicity(grid) * sum_steps * 2,
+            helpers.smoothness(grid) * sum_steps * 2,
+            zeros * math.log2(max_tile) * sum_steps / 2,
+            val_mean / math.log2(max_tile) * 4,
         ]
         # print(val)
         return sum(val)

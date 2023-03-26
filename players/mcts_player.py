@@ -157,7 +157,7 @@ class MCTSPlayer(AIPlayer):
         high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
         val = [
             math.log(high_on_edge if high_on_edge > 0 else 1),
-            math.log(max_in_corner if max_in_corner > 0 else 1) / 2,
+            # math.log(max_in_corner if max_in_corner > 0 else 1) / 2,
             helpers.monotonicity(grid) * sum_steps * 4,
             helpers.smoothness(grid) * sum_steps * 2,
             zeros * math.log2(max_tile) * sum_steps / 2,
