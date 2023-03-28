@@ -9,7 +9,7 @@ from players import AIPlayer
 class MinimaxPlayer(AIPlayer):
     """AI player using Minimax algorithm"""
 
-    depth = 6
+    depth = 4
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -20,65 +20,70 @@ class MinimaxPlayer(AIPlayer):
         move = MoveFactory.create(self.get_best_move(self.grid))  # type: ignore
         return self.grid.move(move)
 
-    def get_best_move(self, grid):
+    def get_best_move(self, grid: Grid2048) -> DIRECTION | None:
         best_score = -math.inf
         best_move = None
         for direction in DIRECTION:
-            # new_grid, moved = self.move(grid, direction)
             new_grid = deepcopy(grid)
             move = MoveFactory.create(direction)
-            moved = new_grid.move(move, add_tile=True)
-            if new_grid.no_moves:
-                return direction
+            moved = new_grid.move(move, add_tile=False)
             if not moved:
                 continue
-            score = self.minimax(new_grid, -math.inf, math.inf, self.depth, True)
+            score = self.minimax(new_grid, -math.inf, math.inf, self.depth, False)
             if score > best_score:
                 best_score = score
                 best_move = direction
         return best_move
 
-    def minimax(self, grid, alpha, beta, depth, maximizing):
+    def minimax(
+        self, grid: Grid2048, alpha: float, beta: float, depth: int, maximizing: bool
+    ) -> float:
         """Return the best score for the grid"""
-        if grid.no_moves or depth == 0:
+        if depth == 0 or grid.no_moves:
             return self.evaluate(grid)
         if maximizing:
             for direction in DIRECTION:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
-                moved = new_grid.move(move, add_tile=True)
+                moved = new_grid.move(move, add_tile=False)
                 if not moved:
                     continue
                 score = self.minimax(new_grid, alpha, beta, depth - 1, False)
                 alpha = max(alpha, score)
-                if alpha >= beta:  # beta cut-off
+                if beta <= alpha:  # beta cut-off
                     break
             return alpha
         else:
-            for direction in DIRECTION:
+            for _ in grid.get_empty_fields():
                 new_grid = deepcopy(grid)
-                move = MoveFactory.create(direction)
-                moved = new_grid.move(move, add_tile=True)
-                if not moved:
-                    continue
+                new_grid.add_random_tile(new_grid.get_empty_fields())
+                if new_grid.no_moves:
+                    return 0
                 score = self.minimax(new_grid, alpha, beta, depth - 1, True)
                 beta = min(beta, score)
-                if alpha >= beta:  # alpha cut-off
+                if beta <= alpha:  # alpha cut-off
                     break
             return beta
 
-    def evaluate(self, grid, move: Move | None = None):
+    def evaluate(self, grid: Grid2048, move: Move | None = None):
         """Return the score of the grid"""
-        val_move_mean = helpers.values_mean(grid) / grid.moves if grid.moves > 0 else 0
+        val_mean = helpers.values_mean(grid)
         zeros = helpers.zeros(grid) / (self.height * self.width)
+        # grid_sum = helpers.grid_sum(grid)
+        # sum_steps = grid_sum / grid.moves * 0.75 if grid.moves > 0 else 0
         max_tile = helpers.max_tile(grid)
+        # max_in_corner = helpers.high_vals_in_corner(grid, max_tile)
+        high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
+        if grid.no_moves:
+            return -math.inf
         val = [
-            math.sqrt(
-                helpers.monotonicity(grid) * helpers.smoothness(grid) * val_move_mean
-            )
-            / 50,
-            helpers.higher_on_edge(grid) * math.log(2, max_tile) * val_move_mean / 100,
-            pow(2, val_move_mean * zeros),
+            0.3 * math.log(high_on_edge if high_on_edge > 0 else 1),
+            # math.log(max_in_corner if max_in_corner > 0 else 1) / 2,
+            0.2 * helpers.monotonicity(grid),
+            0.05 * helpers.smoothness(grid),
+            5 * zeros,
+            grid.score / grid.moves if grid.moves > 0 else 0,
+            val_mean,
         ]
         # print(val)
         return sum(val)
