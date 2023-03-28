@@ -72,10 +72,10 @@ class MinimaxPlayer(AIPlayer):
         max_tile = helpers.max_tile(grid)
         high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
         if grid.no_moves:
-            return -math.inf
+            return 0
         val = [
             0.3 * math.log(high_on_edge if high_on_edge > 0 else 1),
-            0.2 * helpers.monotonicity(grid),
+            0.25 * helpers.monotonicity(grid),
             0.05 * helpers.smoothness(grid),
             5 * zeros,
             grid.score / grid.moves if grid.moves > 0 else 0,
