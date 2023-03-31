@@ -9,7 +9,7 @@ from players import AIPlayer
 class MinimaxPlayer(AIPlayer):
     """AI player using Minimax algorithm"""
 
-    depth = 4
+    depth = 5
 
     def __init__(self, grid: Grid2048):
         super().__init__(grid)
@@ -39,9 +39,12 @@ class MinimaxPlayer(AIPlayer):
         self, grid: Grid2048, alpha: float, beta: float, depth: int, maximizing: bool
     ) -> float:
         """Return the best score for the grid"""
-        if depth == 0 or grid.no_moves:
+        if grid.no_moves:
+            return 0
+        if depth == 0:
             return self.evaluate(grid)
         if maximizing:
+            score = -math.inf
             for direction in DIRECTION:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
@@ -54,12 +57,10 @@ class MinimaxPlayer(AIPlayer):
                     break
             return alpha
         else:
+            score = math.inf
             for _ in grid.get_empty_fields():
-                new_grid = deepcopy(grid)
-                new_grid.add_random_tile(new_grid.get_empty_fields())
-                if new_grid.no_moves:
-                    return 0
-                score = self.minimax(new_grid, alpha, beta, depth - 1, True)
+                grid.add_random_tile(grid.get_empty_fields())
+                score = self.minimax(grid, alpha, beta, depth - 1, True)
                 beta = min(beta, score)
                 if beta <= alpha:  # alpha cut-off
                     break
@@ -71,15 +72,14 @@ class MinimaxPlayer(AIPlayer):
         zeros = helpers.zeros(grid) / (self.height * self.width)
         max_tile = helpers.max_tile(grid)
         high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
-        if grid.no_moves:
-            return 0
         val = [
-            0.3 * math.log(high_on_edge if high_on_edge > 0 else 1),
-            0.25 * helpers.monotonicity(grid),
+            0.95 * math.log(high_on_edge if high_on_edge > 0 else 1),
+            0.21 * helpers.monotonicity(grid),
             0.05 * helpers.smoothness(grid),
-            5 * zeros,
+            zeros * math.log2(max_tile),
             grid.score / grid.moves if grid.moves > 0 else 0,
-            val_mean,
+            # val_mean,
+            # grid.score,
         ]
         # print(val)
         return sum(val)
