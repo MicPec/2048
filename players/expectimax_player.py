@@ -55,24 +55,21 @@ class ExpectimaxPlayer(AIPlayer):
             # iterate over all empty fields and add a random tile
             values = []
             for _ in grid.get_empty_fields():
-                new_grid = deepcopy(grid)
-                new_grid.add_random_tile(new_grid.get_empty_fields())
-                values.append(self.expectimax(new_grid, depth - 1, True))
+                grid.add_random_tile(grid.get_empty_fields())
+                values.append(self.expectimax(grid, depth - 1, True))
             return sum(values) / len(values) if values else 0
 
     def evaluate(self, grid, move: Move | None = None):
         """Return the score of the grid"""
-        val_mean = helpers.values_mean(grid)
         zeros = helpers.zeros(grid) / (self.height * self.width)
         max_tile = helpers.max_tile(grid)
         high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
         val = [
-            0.2 * math.log(high_on_edge if high_on_edge > 0 else 1),
-            0.4 * helpers.monotonicity(grid),
+            0.95 * math.log(high_on_edge if high_on_edge > 0 else 1),
+            0.51 * helpers.monotonicity(grid),
             0.05 * helpers.smoothness(grid),
-            5 * zeros,
+            zeros * math.log2(max_tile),
             grid.score / grid.moves if grid.moves > 0 else 0,
-            val_mean,
         ]
         # print(val)
         return sum(val)
