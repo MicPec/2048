@@ -173,14 +173,14 @@ class Move:
         matrix = grid.data
         for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
-            lst = matrix[:, col]
+            lst = matrix[::-1, col]
             temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
             # Rebuild the column
             if temp:
                 matrix[::-1, col] = 0
-                matrix[-len(temp) :, col] = temp
+                matrix[-len(temp) :, col] = temp[::-1]
         return grid
 
     def shift_left(self, grid: Grid2048) -> Grid2048:

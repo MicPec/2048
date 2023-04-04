@@ -20,6 +20,46 @@ class TestGrid2048(unittest.TestCase):
             "\n-------------\n|2 |  |  |  |\n-------------\n|  |4 |  |  |\n-------------\n|  |  |8 |  |\n-------------\n|  |  |  |16|\n-------------\n",
         )
 
+    def test_move_left(self):
+        grid = Grid2048(4, 4)
+        grid.data = np.array([[2, 2, 2, 0], [2, 0, 2, 0], [2, 0, 0, 2], [4, 0, 0, 4]])
+        move = MoveFactory.create(DIRECTION.LEFT)
+        grid.move(move, add_tile=False)
+        self.assertEqual(
+            grid.data.tolist(),
+            np.array([[4, 2, 0, 0], [4, 0, 0, 0], [4, 0, 0, 0], [8, 0, 0, 0]]).tolist(),
+        )
+
+    def test_move_right(self):
+        grid = Grid2048(4, 4)
+        grid.data = np.array([[2, 2, 2, 0], [2, 0, 2, 0], [2, 0, 0, 2], [4, 0, 0, 4]])
+        move = MoveFactory.create(DIRECTION.RIGHT)
+        grid.move(move, add_tile=False)
+        self.assertEqual(
+            grid.data.tolist(),
+            np.array([[0, 0, 2, 4], [0, 0, 0, 4], [0, 0, 0, 4], [0, 0, 0, 8]]).tolist(),
+        )
+
+    def test_move_up(self):
+        grid = Grid2048(4, 4)
+        grid.data = np.array([[2, 2, 2, 0], [2, 0, 2, 0], [2, 2, 0, 2], [4, 0, 0, 4]])
+        move = MoveFactory.create(DIRECTION.UP)
+        grid.move(move, add_tile=False)
+        self.assertEqual(
+            grid.data.tolist(),
+            np.array([[4, 4, 4, 2], [2, 0, 0, 4], [4, 0, 0, 0], [0, 0, 0, 0]]).tolist(),
+        )
+
+    def test_move_down(self):
+        grid = Grid2048(4, 4)
+        grid.data = np.array([[2, 2, 2, 0], [2, 0, 2, 0], [2, 2, 0, 2], [4, 0, 0, 4]])
+        move = MoveFactory.create(DIRECTION.DOWN)
+        grid.move(move, add_tile=False)
+        self.assertEqual(
+            grid.data.tolist(),
+            np.array([[0, 0, 0, 0], [2, 0, 0, 0], [4, 0, 0, 2], [4, 4, 4, 4]]).tolist(),
+        )
+
     def test_getitem_setitem(self):
         grid = Grid2048(4, 4)
         grid[0, 0] = 2
