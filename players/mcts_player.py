@@ -49,16 +49,18 @@ class MCTSNode:
         )
 
     @property
-    def rave(self):
-        return (
-            (self.value + self.parent.value) / (self.visits + self.parent.visits)  # type: ignore
-            if self.visits > 0
-            else math.inf
-        )
-
-    @property
     def is_terminal(self) -> bool:
         return self.grid.no_moves
+
+    @property
+    def is_leaf(self) -> bool:
+        return not self.children
+
+    @property
+    def is_fully_expanded(self) -> bool:
+        result = len(self.children) == len(self.valid_moves)
+        print(f"fully expanded: {result}")
+        return len(self.children) == len(self.valid_moves)
 
     def get_best_child(self):
         node = self
@@ -85,16 +87,22 @@ class MCTSNode:
         for direction in self.valid_moves:
             new_grid = deepcopy(self.grid)
             new_grid.move(MoveFactory.create(direction), add_tile=True)
+            # if empty := new_grid.get_empty_fields():
+            #     for tile in empty:
+            #         new_grid = deepcopy(new_grid)
+            #         new_grid.put_random_tile(*tile)  # type: ignore
+            #         self.add_child(MCTSNode(new_grid, direction))
+            # else:
             self.add_child(MCTSNode(new_grid, direction))
         return choice(self.children)
 
     def simulate(self, sim_l=math.inf) -> Grid2048:
-        grid = deepcopy(self.grid)
+        grid = self.grid  # deepcopy(self.grid)
         s = 0
         while not grid.no_moves and (s < sim_l or sim_l < 0):
             s += 1
             direction = choice(list(DIRECTION))
-            grid.move(MoveFactory.create(direction))
+            grid.move(MoveFactory.create(direction), add_tile=True)
         return grid
 
 
@@ -104,7 +112,7 @@ class MCTSPlayer(AIPlayer):
     sim_length = 200
     # Length of the simulation. How many times the simulation is run
 
-    rnd_steps = 3
+    rnd_steps = 2
     # Number of random steps to take before evaluating the grid.
     # Set to positive integer to evaluate the grid after a certain number of random moves.
     # Set to 0 to evaluate the grid after each move.
@@ -130,13 +138,10 @@ class MCTSPlayer(AIPlayer):
         for _ in range(self.sim_length):
             node = self.root.get_best_child()
             if node.is_terminal:
-                score = -1
+                score = -2.2
             else:
                 child = node.expand()
                 score = self.evaluate(child.simulate(self.rnd_steps))
-                child.update(score)
-                child.backpropagate(score)
-
             node.update(score)
             node.backpropagate(score)
         return self.select_move()
@@ -148,20 +153,23 @@ class MCTSPlayer(AIPlayer):
 
     def evaluate(self, grid, move: Move | None = None) -> float:
         """Return the score of the grid"""
-        val_mean = helpers.values_mean(grid)
-        zeros = helpers.zeros(grid) / (self.height * self.width)
-        grid_sum = helpers.grid_sum(grid)
-        sum_steps = grid_sum / grid.moves * 0.75 if grid.moves > 0 else 0
         max_tile = helpers.max_tile(grid)
-        max_in_corner = helpers.high_vals_in_corner(grid, max_tile)
+        zeros = helpers.zeros(grid) * math.log2(max_tile) / helpers.grid_size(grid)
+        val_mean = helpers.values_mean(grid)
+        grid_sum = helpers.grid_sum(grid)
+        step_sum = grid_sum / grid.moves if grid.moves > 0 else 1
+        # max_in_corner = helpers.high_vals_in_corner(grid, max_tile)
         high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
+        higher_on_edge = helpers.higher_on_edge(grid)
         val = [
-            math.log(high_on_edge if high_on_edge > 0 else 1),
-            # math.log(max_in_corner if max_in_corner > 0 else 1) / 2,
-            helpers.monotonicity(grid) * sum_steps * 4,
-            helpers.smoothness(grid) * sum_steps * 2,
-            zeros * math.log2(max_tile) * sum_steps / 2,
-            val_mean / math.log2(max_tile) * 2,
+            # math.sqrt(high_on_edge) / 2,
+            math.sqrt(higher_on_edge) / 4,
+            # # math.sqrt(max_in_corner) * 0.25,
+            helpers.monotonicity(grid) * math.log2(max_tile) / 5,
+            helpers.smoothness(grid) * 3.5,
+            zeros * 3,
+            val_mean / 7,
+            step_sum,
         ]
         # print(val)
         return sum(val)
