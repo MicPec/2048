@@ -115,6 +115,16 @@ class TestGrid2048(unittest.TestCase):
             grid[i, j] = 2 ** (i + 1)
         self.assertFalse(grid.no_moves)
 
+    def test_move_valid(self):
+        grid = Grid2048(4, 4)
+        grid.data = np.array([[2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2], [0, 2, 0, 2]])
+        move = MoveFactory.create(DIRECTION.LEFT)
+        moved = grid.move(move, add_tile=False)
+        self.assertTrue(moved)
+        move = MoveFactory.create(DIRECTION.LEFT)
+        moved = grid.move(move)
+        self.assertFalse(moved)
+
 
 if __name__ == "__main__":
     unittest.main()

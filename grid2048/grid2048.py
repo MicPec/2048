@@ -88,6 +88,10 @@ class Grid2048:
             row, col = choice(empty_fields)
             self._grid[row, col] = choices([2, 4], [0.9, 0.1])[0]
 
+    def put_random_tile(self, row: int, col: int) -> None:
+        """Put a random tile at the given coordinates"""
+        self._grid[row, col] = choices([2, 4], [0.9, 0.1])[0]
+
     @property
     def no_moves(self) -> bool:
         """Check if there are any moves left"""
@@ -131,14 +135,13 @@ class Move:
         self.dir_fn = dir_fn
         self._called = False
         self._is_valid = False
+        self._changed = False
 
     def __call__(self, grid: Grid2048) -> Grid2048:
         """Execute the move"""
-        cmp = np.copy(grid.data)
         self.dir_fn(self, grid)
         self._called = True
-        # It`s done this way, because I could not find a better/faster way to do it.
-        self._is_valid = not np.array_equal(grid.data, cmp)
+        self._is_valid = self._changed
         return grid
 
     @property
@@ -158,7 +161,7 @@ class Move:
         matrix = grid.data
         for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
-            lst = matrix[:, col]
+            lst = np.copy(matrix[:, col])
             temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
@@ -166,6 +169,8 @@ class Move:
             if temp:
                 matrix[:, col] = 0
                 matrix[: len(temp), col] = temp
+            if lst.tolist() != matrix[:, col].tolist():
+                self._changed = True
         return grid
 
     def shift_down(self, grid: Grid2048) -> Grid2048:
@@ -173,7 +178,7 @@ class Move:
         matrix = grid.data
         for col in range(len(matrix[0])):
             # Create a temporary list to store the non-zero tiles
-            lst = matrix[::-1, col]
+            lst = np.copy(matrix[::-1, col])
             temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
@@ -181,6 +186,8 @@ class Move:
             if temp:
                 matrix[::-1, col] = 0
                 matrix[-len(temp) :, col] = temp[::-1]
+            if lst.tolist() != matrix[::-1, col].tolist():
+                self._changed = True
         return grid
 
     def shift_left(self, grid: Grid2048) -> Grid2048:
@@ -188,7 +195,7 @@ class Move:
         matrix = grid.data
         for col in range(matrix.shape[0]):
             # Create a temporary list to store the non-zero tiles
-            lst = matrix[col, :]
+            lst = np.copy(matrix[col, :])
             temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
@@ -196,6 +203,8 @@ class Move:
             if temp:
                 matrix[col, :] = 0
                 matrix[col, : len(temp)] = temp
+            if lst.tolist() != matrix[col, :].tolist():
+                self._changed = True
         return grid
 
     def shift_right(self, grid: Grid2048) -> Grid2048:
@@ -203,7 +212,7 @@ class Move:
         matrix = grid.data
         for col in range(matrix.shape[0]):
             # Create a temporary list to store the non-zero tiles
-            lst = matrix[col, ::-1]
+            lst = np.copy(matrix[col, ::-1])
             temp = list(lst[lst != 0])
             # Combine the tiles
             self.score += self.combine_tiles(temp)
@@ -211,6 +220,8 @@ class Move:
             if temp:
                 matrix[col, :] = 0
                 matrix[col, -len(temp) :] = temp[::-1]
+            if lst.tolist() != matrix[col, ::-1].tolist():
+                self._changed = True
         return grid
 
     def combine_tiles(self, temp: list[int]) -> int:
