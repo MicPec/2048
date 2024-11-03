@@ -5,7 +5,7 @@ from .mcs_player import MCSPlayer
 from .mcts_player import MCTSPlayer
 from .minimax_player import MinimaxPlayer
 from .random_player import RandomPlayer
-from .user_player import UserPlayer, KivyPlayer
+from .user_player import UserPlayer, KivyPlayer, PygamePlayer
 
 player_factory = PlayerFactory()
 player_factory.register("user", UserPlayer)

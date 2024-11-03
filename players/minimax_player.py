@@ -1,4 +1,5 @@
 """AI player using Minimax algorithm"""
+
 import math
 from copy import deepcopy
 
@@ -29,7 +30,7 @@ class MinimaxPlayer(AIPlayer):
             moved = new_grid.move(move, add_tile=False)
             if not moved:
                 continue
-            score = self.minimax(new_grid, -math.inf, math.inf, self.depth, False)
+            score = self.minimax(new_grid, -math.inf, math.inf, self.depth, True)
             if score > best_score:
                 best_score = score
                 best_move = direction
@@ -39,32 +40,37 @@ class MinimaxPlayer(AIPlayer):
         self, grid: Grid2048, alpha: float, beta: float, depth: int, maximizing: bool
     ) -> float:
         """Return the best score for the grid"""
-        if grid.no_moves:
-            return 0
-        if depth == 0:
+        if depth == 0 or grid.no_moves:
             return self.evaluate(grid)
+
         if maximizing:
-            score = -math.inf
+            max_score = -math.inf
             for direction in DIRECTION:
                 new_grid = deepcopy(grid)
                 move = MoveFactory.create(direction)
-                moved = new_grid.move(move, add_tile=False)
-                if not moved:
+                if not new_grid.move(move, add_tile=False):
                     continue
                 score = self.minimax(new_grid, alpha, beta, depth - 1, False)
+                max_score = max(max_score, score)
                 alpha = max(alpha, score)
                 if beta <= alpha:  # beta cut-off
                     break
-            return alpha
+            return max_score
         else:
-            score = math.inf
-            for _ in grid.get_empty_fields():
-                grid.add_random_tile(grid.get_empty_fields())
-                score = self.minimax(grid, alpha, beta, depth - 1, True)
+            min_score = math.inf
+            empty_fields = grid.get_empty_fields()
+            if not empty_fields:
+                return self.minimax(grid, alpha, beta, depth - 1, True)
+
+            for field in empty_fields:
+                new_grid = deepcopy(grid)
+                new_grid.put_random_tile(*field)
+                score = self.minimax(new_grid, alpha, beta, depth - 1, True)
+                min_score = min(min_score, score)
                 beta = min(beta, score)
                 if beta <= alpha:  # alpha cut-off
                     break
-            return beta
+            return min_score
 
     def evaluate(self, grid: Grid2048, move: Move | None = None):
         """Return the score of the grid"""
@@ -78,8 +84,5 @@ class MinimaxPlayer(AIPlayer):
             0.05 * helpers.smoothness(grid),
             zeros * math.log2(max_tile),
             grid.score / grid.moves if grid.moves > 0 else 0,
-            # val_mean,
-            # grid.score,
         ]
-        # print(val)
         return sum(val)

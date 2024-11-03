@@ -1,4 +1,5 @@
 """AI player using Expectimax algorithm"""
+
 import math
 from copy import deepcopy
 
@@ -7,7 +8,7 @@ from players import AIPlayer
 
 
 class ExpectimaxPlayer(AIPlayer):
-    """AI player using Expectimax algorithm""" ""
+    """AI player using Expectimax algorithm"""
 
     depth = 4
 
@@ -16,7 +17,7 @@ class ExpectimaxPlayer(AIPlayer):
         self.height = self.grid.height
         self.width = self.grid.width
 
-    def play(self) -> bool:
+    def play(self, *args, **kwargs) -> bool:
         move = MoveFactory.create(self.get_best_move(self.grid))  # type: ignore
         return self.grid.move(move)
 
@@ -47,17 +48,20 @@ class ExpectimaxPlayer(AIPlayer):
                 move = MoveFactory.create(direction)
                 if new_grid.move(move, add_tile=False):
                     value = self.expectimax(new_grid, depth - 1, False)
-                else:
-                    continue
-                best_value = max(best_value, value)
+                    best_value = max(best_value, value)
             return best_value
         else:
             # iterate over all empty fields and add a random tile
+            empty_fields = grid.get_empty_fields()
+            if not empty_fields:
+                return self.expectimax(grid, depth - 1, True)
+
             values = []
-            for _ in grid.get_empty_fields():
-                grid.add_random_tile(grid.get_empty_fields())
-                values.append(self.expectimax(grid, depth - 1, True))
-            return sum(values) / len(values) if values else 0
+            for field in empty_fields:
+                new_grid = deepcopy(grid)
+                new_grid.put_random_tile(*field)
+                values.append(self.expectimax(new_grid, depth - 1, True))
+            return sum(values) / len(values)
 
     def evaluate(self, grid, move: Move | None = None):
         """Return the score of the grid"""
@@ -71,5 +75,4 @@ class ExpectimaxPlayer(AIPlayer):
             zeros * math.log2(max_tile),
             grid.score / grid.moves if grid.moves > 0 else 0,
         ]
-        # print(val)
         return sum(val)

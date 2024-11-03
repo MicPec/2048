@@ -10,7 +10,7 @@ from players import AIPlayer
 class MCTSNode:
     """Node in the Monte Carlo Tree Search tree"""
 
-    c = 35
+    c = 1.5#35
     # Exploration/exploitation parameter
     # Value is set experimentally and needs to be fine-tuned/balanced
     # every time the evaluation function is changed
@@ -59,7 +59,6 @@ class MCTSNode:
     @property
     def is_fully_expanded(self) -> bool:
         result = len(self.children) == len(self.valid_moves)
-        print(f"fully expanded: {result}")
         return len(self.children) == len(self.valid_moves)
 
     def get_best_child(self):
@@ -97,7 +96,7 @@ class MCTSNode:
         return choice(self.children)
 
     def simulate(self, sim_l=math.inf) -> Grid2048:
-        grid = self.grid  # deepcopy(self.grid)
+        grid =  deepcopy(self.grid)
         s = 0
         while not grid.no_moves and (s < sim_l or sim_l < 0):
             s += 1
@@ -109,7 +108,7 @@ class MCTSNode:
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo Tree Search algorithm"""
 
-    sim_length = 200
+    sim_length = 100
     # Length of the simulation. How many times the simulation is run
 
     rnd_steps = 2
@@ -135,13 +134,18 @@ class MCTSPlayer(AIPlayer):
 
     def get_best_direction(self) -> DIRECTION:
         """Run the simulation and return the best move"""
+        score = 0
         for _ in range(self.sim_length):
             node = self.root.get_best_child()
             if node.is_terminal:
-                score = -2.2
-            else:
+                score *= 0.9
+                node.backpropagate(score)
+                continue
+            if not node.is_fully_expanded:
                 child = node.expand()
-                score = self.evaluate(child.simulate(self.rnd_steps))
+                if child:
+                    score = self.evaluate(child.simulate(self.rnd_steps))
+                    child.backpropagate(score)
             node.update(score)
             node.backpropagate(score)
         return self.select_move()
@@ -162,12 +166,12 @@ class MCTSPlayer(AIPlayer):
         high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
         higher_on_edge = helpers.higher_on_edge(grid)
         val = [
-            # math.sqrt(high_on_edge) / 2,
+            math.sqrt(high_on_edge) / 2,
             math.sqrt(higher_on_edge) / 4,
             # # math.sqrt(max_in_corner) * 0.25,
             helpers.monotonicity(grid) * math.log2(max_tile) / 5,
             helpers.smoothness(grid) * 3.5,
-            zeros * 3,
+            zeros * 3.5,
             val_mean / 7,
             step_sum,
         ]

@@ -48,6 +48,7 @@ Also, there is a random player: `random` and `cycle` player that cycle through d
 There are two simple game examples:
 - 2048.py - CLI version, use `u`, `d`, `l`, `r` keys.
 - 2048kivy.py - GUI version using [Kivy](https://kivy.org), use the arrow keys.
+- 2048pygame.py - GUI version using [Pygame](https://www.pygame.org), use the arrow keys.
 
 The default player is `user`, but you can change it by passing `-p` argument. For example:
 
@@ -57,7 +58,7 @@ python ./2048.py -p mcts
 ```
 or
 ```bash
-python ./2048kivy.py -p mcts -i 10 
+python ./2048pygame.py -p mcts -fps 10 
 ```
 where `-i` is the interval between moves.
 You can also pause the game by pressing `space` key, and move step by step by pressing `enter` key.
@@ -71,7 +72,7 @@ Also, you can conut the statistics of the player by running:
 ```bash
 python ./2048stats.py -p mcs
 ```
-Default game count is set to 10, but you can change it by passing `-i` argument.
+Default game speed is set to 10, but you can change it by passing `-i` argument.
 
 
 Have fun ;)

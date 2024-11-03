@@ -1,4 +1,5 @@
 """AI player using Monte Carlo simulation algorithm"""
+
 import math
 from copy import deepcopy
 from random import choice
@@ -36,16 +37,16 @@ class MCSPlayer(AIPlayer):
         return max(wins, key=wins.get)  # type: ignore
 
     def simulate(self, grid):
+        sim_grid = deepcopy(grid)
         sim_n = 0
         while sim_n < self.sim_length:
             sim_n += 1
             # select a random move
             direction = choice(list(DIRECTION))
             move = MoveFactory.create(direction)
-            grid.move(move, add_tile=True)
-            if grid.no_moves:
+            if not sim_grid.move(move, add_tile=True) or sim_grid.no_moves:
                 break
-        return self.evaluate(grid)
+        return self.evaluate(sim_grid)
 
     def evaluate(self, grid):
         """Return the score of the grid"""
@@ -55,12 +56,13 @@ class MCSPlayer(AIPlayer):
         sum_steps = grid_sum / grid.moves * 0.75 if grid.moves > 0 else 0
         max_tile = helpers.max_tile(grid)
         high_on_edge = helpers.high_vals_on_edge(grid, max_tile // 2)
+
+        # Avoid multiplying by zeros to prevent zero scores for terminal states
         val = [
             math.log(high_on_edge if high_on_edge > 0 else 1),
-            helpers.monotonicity(grid) * sum_steps * 2,
-            helpers.smoothness(grid) * sum_steps * 2,
-            zeros * math.log2(max_tile) * sum_steps / 2,
+            helpers.monotonicity(grid) * (sum_steps + 1) * 2,
+            helpers.smoothness(grid) * (sum_steps + 1) * 2,
+            (zeros + 0.1) * math.log2(max_tile) * (sum_steps + 1) / 2,
             val_mean / math.log2(max_tile) * 4,
         ]
-        # print(val)
         return sum(val)

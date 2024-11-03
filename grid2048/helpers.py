@@ -1,15 +1,16 @@
 """Helper functions for computing the score of a grid."""
+
 from copy import deepcopy
 from itertools import product
 import math
-from typing import Any
+from typing import Any, List, Optional
 import numpy as np
 
 from grid2048.grid2048 import DIRECTION, Grid2048, MoveFactory
 
 
-def get_valid_moves(grid: Grid2048) -> list[DIRECTION]:
-    """Return a list of grids with valid moves."""
+def get_valid_moves(grid: Grid2048) -> List[DIRECTION]:
+    """Return a list of valid moves for the grid."""
     valid = []
     for direction in DIRECTION:
         cmp = deepcopy(grid)
@@ -18,33 +19,42 @@ def get_valid_moves(grid: Grid2048) -> list[DIRECTION]:
     return valid
 
 
-def normalize(values: list[Any]) -> list[float]:
-    """Normalize a list of numbers"""
+def normalize(values: List[Any]) -> List[float]:
+    """Normalize a list of numbers to range [0,1]"""
+    if not values:
+        return []
     maxval = max(values)
     minval = min(values)
+    if maxval == minval:
+        return [1.0] * len(values)
     return [(x - minval) / (maxval - minval) for x in values]
 
 
-def zeros(grid: Grid2048) -> float:
-    """Returns the number of empty cells in the g.count_nonzero(arr==0)rid."""
+def zeros(grid: Grid2048) -> int:
+    """Returns the number of empty cells in the grid."""
     return np.count_nonzero(grid.data == 0)
-    # return len([cell for row in grid.data for cell in row if cell == 0])
 
 
 def monotonicity(grid: Grid2048) -> float:
-    """Returns the monotonocity of the grid.
+    """Returns the monotonicity of the grid.
     Its counted by adding the difference of powers of 2 between each element
     Returns the square root of grid size divided by the final score,
-    so the bigger the result, the monotonous the grid is."""
+    so the bigger the result, the more monotonous the grid is."""
     score = 0
     for row in grid.data:
         for i in range(len(row) - 1):
             if row[i] != 0 and row[i + 1] != 0:
-                score += abs(math.log2(row[i]) - math.log2(row[i + 1]))
+                try:
+                    score += abs(math.log2(row[i]) - math.log2(row[i + 1]))
+                except ValueError:
+                    continue
     for col in zip(*grid.data):
         for i in range(len(col) - 1):
             if col[i] != 0 and col[i + 1] != 0:
-                score += abs(math.log2(col[i]) - math.log2(col[i + 1]))
+                try:
+                    score += abs(math.log2(col[i]) - math.log2(col[i + 1]))
+                except ValueError:
+                    continue
     return (grid_size(grid) ** 2 / score) if score != 0 else 0
 
 
@@ -60,10 +70,15 @@ def smoothness(grid: Grid2048) -> float:
             smoothness_count += abs(grid[i, j] - grid[i + 1, j])
         if grid[i, j] != grid[i, j + 1] and grid[i, j] != 0 and grid[i, j + 1] != 0:
             smoothness_count += abs(grid[i, j] - grid[i, j + 1])
-    return (np.sum(grid.data) / int(smoothness_count)) if smoothness_count != 0 else 0
+    grid_total = np.sum(grid.data)
+    return (
+        (grid_total / smoothness_count)
+        if smoothness_count != 0 and grid_total != 0
+        else 0
+    )
 
 
-def pairs(grid: Grid2048, values: list[int] | None = None) -> float:
+def pairs(grid: Grid2048, values: Optional[List[int]] = None) -> float:
     """Returns the sum of the pairs in the grid
     divided by the number of cells in the grid.
     You can also specify the values of the pairs to count.
@@ -71,7 +86,9 @@ def pairs(grid: Grid2048, values: list[int] | None = None) -> float:
     if values is None:
         values = [2**x for x in range(1, 16)]
     pairs_count = 0
-    tmp = []
+    tmp: List[int] = []
+
+    # Check rows
     for row in grid.data:
         tmp.extend(
             row[i] for i in range(len(row) - 1) if row[i] != 0 and row[i] in values
@@ -79,35 +96,38 @@ def pairs(grid: Grid2048, values: list[int] | None = None) -> float:
         for i in range(len(tmp) - 1):
             if tmp[i] == tmp[i + 1]:
                 pairs_count += tmp[i]
-        tmp = []
+        tmp.clear()
 
+    # Check columns
     for col in zip(*grid.data):
-        for i in range(len(col) - 1):
-            if col[i] != 0 and col[i] in values:
-                tmp.append(col[i])
+        tmp.extend(
+            col[i] for i in range(len(col) - 1) if col[i] != 0 and col[i] in values
+        )
         for i in range(len(tmp) - 1):
             if tmp[i] == tmp[i + 1]:
                 pairs_count += tmp[i]
-        tmp = []
+        tmp.clear()
 
-    return pairs_count / grid_size(grid)
+    grid_size_val = grid_size(grid)
+    return pairs_count / grid_size_val if grid_size_val != 0 else 0
 
 
 def flatness(grid: Grid2048) -> float:
     """Returns the flatness of the grid.
     It works by iterating through the grid and adding
     the absolute difference between each tile and the max
-    tile of its row. Divided by the number of cells in the grid.
-    Higher values are better."""
+    tile of its row. Divided by the number of cells in the grid."""
     flatness_count = 0
     for row in grid.data:
+        max_val = max(row) if any(row) else 0
         for cell in row:
             if cell != 0:
-                flatness_count += abs(cell - max(row))
-    return flatness_count / grid_size(grid)
+                flatness_count += abs(cell - max_val)
+    grid_size_val = grid_size(grid)
+    return flatness_count / grid_size_val if grid_size_val != 0 else 0
 
 
-def high_vals_on_edge(grid: Grid2048, divider=256) -> float:
+def high_vals_on_edge(grid: Grid2048, divider: int = 256) -> float:
     """Returns the sum of high values (greater or equal to divider)
     that are on the edge the grid.
     Result is divided by the number of cells in the grid."""
@@ -119,12 +139,13 @@ def high_vals_on_edge(grid: Grid2048, divider=256) -> float:
             i == 0 or j == 0 or i == grid.height - 1 or j == grid.width - 1
         ):
             high_vals += grid[i, j]
-    return int(high_vals) / grid_size(grid)
+    grid_size_val = grid_size(grid)
+    return int(high_vals) / grid_size_val if grid_size_val != 0 else 0
 
 
-def high_vals_in_corner(grid: Grid2048, divider=256) -> float:
+def high_vals_in_corner(grid: Grid2048, divider: int = 256) -> float:
     """Returns the sum of high values (greater or equal to divider)
-    that are in the cornes of the grid.
+    that are in the corners of the grid.
     Result is divided by the number of cells in the grid."""
     corner_vals = 0
     if grid[0, 0] >= divider:
@@ -135,7 +156,8 @@ def high_vals_in_corner(grid: Grid2048, divider=256) -> float:
         corner_vals += grid[grid.height - 1, 0]
     if grid[grid.height - 1, grid.width - 1] >= divider:
         corner_vals += grid[grid.height - 1, grid.width - 1]
-    return int(corner_vals) / grid_size(grid)
+    grid_size_val = grid_size(grid)
+    return int(corner_vals) / grid_size_val if grid_size_val != 0 else 0
 
 
 def higher_on_edge(grid: Grid2048) -> float:
@@ -153,11 +175,12 @@ def higher_on_edge(grid: Grid2048) -> float:
             higher += grid[i, j]
         if j == grid.width - 1 and grid[i, j] > grid[i, j - 1]:
             higher += grid[i, j]
-    return int(higher) / grid_size(grid)
+    grid_size_val = grid_size(grid)
+    return int(higher) / grid_size_val if grid_size_val != 0 else 0
 
 
-def high_to_low(grid: Grid2048, divider=256) -> float:
-    """Returns the ratio beteen the high and low values in the grid.
+def high_to_low(grid: Grid2048, divider: int = 256) -> float:
+    """Returns the ratio between the high and low values in the grid.
     Values are normalized to be between 0 and 1."""
     high_vals = 0
     low_vals = 0
@@ -168,12 +191,15 @@ def high_to_low(grid: Grid2048, divider=256) -> float:
             high_vals += 1
         else:
             low_vals += 1
+    total = high_vals + low_vals
+    if total == 0:
+        return 0
     ratio = high_vals / low_vals if low_vals != 0 else high_vals
-    return ratio / (high_vals + low_vals)
+    return ratio / total
 
 
 def low_to_high(grid: Grid2048, divider: int = 256) -> float:
-    """Returns the ratio beteen the low and high values in the grid.
+    """Returns the ratio between the low and high values in the grid.
     Values are normalized to be between 0 and 1."""
     high_vals = 0
     low_vals = 0
@@ -184,44 +210,29 @@ def low_to_high(grid: Grid2048, divider: int = 256) -> float:
             high_vals += 1
         else:
             low_vals += 1
+    total = high_vals + low_vals
+    if total == 0:
+        return 0
     ratio = low_vals / high_vals if high_vals != 0 else low_vals
-    return ratio / (high_vals + low_vals)
+    return ratio / total
 
 
-def count_vals_eq(grid: Grid2048, eq: int) -> float:
+def count_vals_eq(grid: Grid2048, eq: int) -> int:
     """Returns the number of values equal to the given value."""
-    eq_vals = 0
-    for i, j in product(range(grid.height), range(grid.width)):
-        if grid[i, j] == 0:
-            continue
-        if grid[i, j] == eq:
-            eq_vals += 1
-    return eq_vals
+    return np.count_nonzero(grid.data == eq)
 
 
-def count_vals_lte(grid: Grid2048, divider: int = 8) -> float:
+def count_vals_lte(grid: Grid2048, divider: int = 8) -> int:
     """Returns the number of values lesser than or equal to the divider."""
-    lte_vals = 0
-    for i, j in product(range(grid.height), range(grid.width)):
-        if grid[i, j] == 0:
-            continue
-        if grid[i, j] <= divider:
-            lte_vals += 1
-    return lte_vals
+    return np.count_nonzero((grid.data != 0) & (grid.data <= divider))
 
 
-def count_vals_gte(grid: Grid2048, divider: int = 256) -> float:
+def count_vals_gte(grid: Grid2048, divider: int = 256) -> int:
     """Returns the number of values greater than or equal to the divider."""
-    gte_vals = 0
-    for i, j in product(range(grid.height), range(grid.width)):
-        if grid[i, j] == 0:
-            continue
-        if grid[i, j] >= divider:
-            gte_vals += 1
-    return gte_vals
+    return np.count_nonzero(grid.data >= divider)
 
 
-def zero_field(grid: Grid2048) -> float:
+def zero_field(grid: Grid2048) -> int:
     """Returns the number of empty fields that are surrounded by empty fields."""
     field = 0
     for i, j in product(range(grid.height - 1), range(grid.width - 1)):
@@ -239,7 +250,7 @@ def zero_field(grid: Grid2048) -> float:
 def move_score(grid: Grid2048) -> int:
     """Returns the sum of the shifted grid."""
 
-    def combine_tiles(cell: list[int]) -> int:
+    def combine_tiles(cell: List[int]) -> int:
         """Combine tiles subfunction."""
         i = 0
         score = 0
@@ -253,22 +264,22 @@ def move_score(grid: Grid2048) -> int:
 
     shifted = 0
     for col in range(grid.width):
-        tmp = [x for x in grid.data[col] if x != 0]
+        tmp = [x for x in grid.data[:, col] if x != 0]
         shifted += combine_tiles(tmp)
     for row in range(grid.height):
-        tmp = [x for x in grid.data[row] if x != 0]
+        tmp = [x for x in grid.data[row, :] if x != 0]
         shifted += combine_tiles(tmp)
     return shifted
 
 
 def max_tile(grid: Grid2048) -> int:
     """Returns the maximum tile in the grid."""
-    return np.max(grid.data)
+    return int(np.max(grid.data))
 
 
 def grid_sum(grid: Grid2048) -> int:
     """Returns the sum of all cells in the grid."""
-    return np.sum(grid.data)
+    return int(np.sum(grid.data))
 
 
 def grid_size(grid: Grid2048) -> int:
@@ -283,4 +294,5 @@ def grid_mean(grid: Grid2048) -> float:
 
 def values_mean(grid: Grid2048) -> float:
     """Returns the mean of all non-zero cells in the grid."""
-    return np.true_divide(grid.data.sum(), (grid.data != 0).sum())
+    non_zero = grid.data[grid.data != 0]
+    return float(np.mean(non_zero)) if len(non_zero) > 0 else 0.0

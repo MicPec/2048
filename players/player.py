@@ -1,4 +1,5 @@
 """Abstract base classes for players and AI players"""
+
 from abc import ABC, abstractmethod
 from typing import Callable
 
@@ -12,7 +13,7 @@ class PlayerInterface(ABC):
         self.grid = grid
 
     @abstractmethod
-    def play(self) -> bool:
+    def play(self, *args, **kwargs) -> bool:
         """Make a move and return True if the grid has changed"""
         # example:
         # move = MoveFactory.create(MOVES.UP)
