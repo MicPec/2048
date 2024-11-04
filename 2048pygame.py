@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """2048 game using PyGame"""
+
 import argparse
 import sys
 
@@ -39,7 +40,7 @@ TEXT_DARK = (119, 110, 101)  # For light tiles
 class Game2048:
     """2048 game class with PyGame interface"""
 
-    def __init__(self, width: int, height: int, player_type: str, fps: int  ):
+    def __init__(self, width: int, height: int, player_type: str, fps: int):
         pygame.init()
         self.width = width
         self.height = height
@@ -64,7 +65,9 @@ class Game2048:
 
     def update_title(self):
         pygame.display.set_caption(
-            f"2048PyGame: {self.player_type} player ({self.width}x{self.height}) {self.clock.get_fps():.2f} FPS" if self.player_type else "2048PyGame"
+            f"2048PyGame: {self.player_type} player ({self.width}x{self.height}) {self.clock.get_fps():.2f} FPS"
+            if self.player_type
+            else "2048PyGame"
         )
 
     def init_game(self):
@@ -144,7 +147,6 @@ class Game2048:
             self.draw()
             self.update_title()
             for event in pygame.event.get():
-                # self.draw()
                 if event.type == pygame.QUIT:
                     running = False
                     break
@@ -156,21 +158,20 @@ class Game2048:
                     elif event.key == pygame.K_ESCAPE:
                         running = False
                         break
-               
-                
+                # Must be drawn here to avoid hangs during AI player's computation
                 self.draw()
-                
+
             if not self.game_over and not self.paused:
                 # Allow AI players to play without an event
-                if self.player_type != 'user':
+                if self.player_type != "user":
                     self.player.play()
-                else: 
+                else:
                     self.player.play(event=event)
+                    event = None  # Clear event to avoid replaying the same move
 
                 # Check for game over
                 if self.grid.no_moves:
                     self.game_over = True
-                    
 
             self.clock.tick(self.fps)
 
