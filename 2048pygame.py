@@ -41,7 +41,7 @@ class Game2048:
     """2048 game class with PyGame interface"""
 
     def __init__(self, width: int, height: int, player_type: str, fps: int):
-        pygame.init()
+        pygame.init()  # pylint: disable=no-member
         self.width = width
         self.height = height
         self.player_type = player_type
@@ -64,6 +64,7 @@ class Game2048:
         self.paused = False
 
     def update_title(self):
+        """Update the window title with the current FPS"""
         pygame.display.set_caption(
             f"2048PyGame: {self.player_type} player ({self.width}x{self.height}) {self.clock.get_fps():.2f} FPS"
             if self.player_type
@@ -115,7 +116,7 @@ class Game2048:
             self.window.blit(sub_text_surface, sub_rect)
 
     def draw(self):
-        """Draw the game state"""
+        """Draw the game board"""
         self.window.fill(BACKGROUND_COLOR)
 
         # Draw score
@@ -147,15 +148,18 @@ class Game2048:
             self.draw()
             self.update_title()
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT:  # pylint: disable=no-member
                     running = False
                     break
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r and self.game_over:
+                elif event.type == pygame.KEYDOWN:  # pylint: disable=no-member
+                    if (
+                        event.key == pygame.K_r  # pylint: disable=no-member
+                        and self.game_over
+                    ):
                         self.init_game()
-                    elif event.key == pygame.K_SPACE:
+                    elif event.key == pygame.K_SPACE:  # pylint: disable=no-member
                         self.paused = not self.paused
-                    elif event.key == pygame.K_ESCAPE:
+                    elif event.key == pygame.K_ESCAPE:  # pylint: disable=no-member
                         running = False
                         break
                 # Must be drawn here to avoid hangs during AI player's computation
@@ -175,7 +179,7 @@ class Game2048:
 
             self.clock.tick(self.fps)
 
-        pygame.quit()
+        pygame.quit()  # pylint: disable=no-member
 
 
 def main():

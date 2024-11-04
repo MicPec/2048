@@ -72,10 +72,10 @@ class PygamePlayer(PlayerInterface):
         if not event:
             return False
 
-        # Only process key down events to prevent continuous movement
         if (
-            event.type == pygame.KEYDOWN and event.key in self.moves
-        ):  # pylint: disable=no-member
+            event.type == pygame.KEYDOWN  # pylint: disable=no-member
+            and event.key in self.moves
+        ):
             move = MoveFactory.create(self.moves[event.key])
             return self.grid.move(move)
 
