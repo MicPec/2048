@@ -1,14 +1,39 @@
 Grid2048 (with AI players)
 --------
 
-2048 game grid engine written for fun in Python. It can be used as a library or as a standalone game. It also has a Kivy GUI version.
+2048 game grid engine written for fun in Python. It can be used as a library or as a standalone game. It also has a Kivy and PyGame GUI version.
 
 ![2048kivy.py](2048kivy.png)
 
 Dependencies:
+
 - Python 3.10+
 - NumPy
+- PyGame (for GUI version)
 - Kivy (for GUI version)
+  
+## Installation
+
+- Clone the repository: 
+  ```
+  git clone https://github.com/MicPec/Grid2048.git
+  cd Grid2048
+ ```
+- Install the required dependencies: 
+  ```
+  uv sync
+  ```
+- Run the game: 
+  ```
+  uv run 2048pygame.py
+  ```
+
+
+> You can also acticate virtual environment and run the game from there.
+> ```
+> source .venv/bin/activate
+> python 2048pygame.py
+> ```
 
 ## Usage
 
@@ -45,7 +70,8 @@ Also, there is a random player: `random` and `cycle` player that cycle through d
 
 ## Play
 
-There are two simple game examples:
+There are three simple game examples:
+
 - 2048.py - CLI version, use `u`, `d`, `l`, `r` keys.
 - 2048kivy.py - GUI version using [Kivy](https://kivy.org), use the arrow keys.
 - 2048pygame.py - GUI version using [Pygame](https://www.pygame.org), use the arrow keys.
@@ -54,23 +80,23 @@ The default player is `user`, but you can change it by passing `-p` argument. Fo
 
 To run mcts player:
 ```bash
-python ./2048.py -p mcts
+uv run ./2048.py -p mcts
 ```
 or
 ```bash
-python ./2048pygame.py -p mcts -fps 10 
+uv run ./2048pygame.py -p mcts -fps 10 
 ```
-where `-i` is the interval between moves.
+where `-fps` is the maixmum number of frames/moves per second.
 You can also pause the game by pressing `space` key, and move step by step by pressing `enter` key.
 
 Also, you can set the width and height of the grid:
 ```bash
-python ./2048.py --rows 3 --cols 6
+uv run ./2048.py --rows 3 --cols 6
 ```
 
 Also, you can conut the statistics of the player by running:
 ```bash
-python ./2048stats.py -p mcs
+uv run ./2048stats.py -p mcs
 ```
 Default game speed is set to 10, but you can change it by passing `-i` argument.
 
