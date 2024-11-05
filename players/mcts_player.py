@@ -1,4 +1,5 @@
 """AI player using Monte Carlo Tree Search algorithm"""
+
 import math
 from copy import deepcopy
 from random import choice
@@ -10,7 +11,7 @@ from players import AIPlayer
 class MCTSNode:
     """Node in the Monte Carlo Tree Search tree"""
 
-    c = 1.5#35
+    c = 1.5  # 35
     # Exploration/exploitation parameter
     # Value is set experimentally and needs to be fine-tuned/balanced
     # every time the evaluation function is changed
@@ -96,7 +97,7 @@ class MCTSNode:
         return choice(self.children)
 
     def simulate(self, sim_l=math.inf) -> Grid2048:
-        grid =  deepcopy(self.grid)
+        grid = deepcopy(self.grid)
         s = 0
         while not grid.no_moves and (s < sim_l or sim_l < 0):
             s += 1
@@ -108,7 +109,7 @@ class MCTSNode:
 class MCTSPlayer(AIPlayer):
     """AI player using Monte Carlo Tree Search algorithm"""
 
-    sim_length = 100
+    sim_length = 150
     # Length of the simulation. How many times the simulation is run
 
     rnd_steps = 2
