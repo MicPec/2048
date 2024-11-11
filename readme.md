@@ -30,6 +30,7 @@ Dependencies:
 
 
 > You can also acticate virtual environment and run the game from there.
+> 
 > ```
 > source .venv/bin/activate
 > python 2048pygame.py
@@ -55,6 +56,7 @@ if grid.no_moves():
 ## Customization
 
 You can customize the grid size by specifying the `width` and `height` when initializing the `Grid2048` object. For example:
+
 ```python
 grid = Grid2048(3, 6)  # Creates a 3x6 grid
 ```
@@ -63,10 +65,9 @@ grid = Grid2048(3, 6)  # Creates a 3x6 grid
 
 There is a possibility to add a custom player class. See `players/user_player.py` for example.
 In `players.py` module are abstract classes for `Player` and `AIPlayer`. You can implement your own player class by inheriting from them and overriding `play` method.
-Few example AI players are included: Monte Carlo Simylation, Monte Carlo Tree Search, Minimax and Expectimax: `mcs`, `mcts` ,`minimax`, `expectimax` respectively. 
+Few example AI players are included: Monte Carlo Simylation, Monte Carlo Tree Search, Minimax and Expectimax: `mcs`, `mcts` ,`minimax`, `expectimax` respectively.
 Evaluation functions still need to be improved, but it's a good start.
 Also, there is a random player: `random` and `cycle` player that cycle through directions.
-
 
 ## Play
 
@@ -79,25 +80,32 @@ There are three simple game examples:
 The default player is `user`, but you can change it by passing `-p` argument. For example:
 
 To run mcts player:
+
 ```bash
 uv run ./2048.py -p mcts
 ```
+
 or
+
 ```bash
 uv run ./2048pygame.py -p mcts -fps 10 
 ```
+
 where `-fps` is the maixmum number of frames/moves per second.
 You can also pause the game by pressing `space` key, and move step by step by pressing `enter` key.
 
 Also, you can set the width and height of the grid:
+
 ```bash
 uv run ./2048.py --rows 3 --cols 6
 ```
 
 Also, you can conut the statistics of the player by running:
+
 ```bash
 uv run ./2048stats.py -p mcs
 ```
+
 Default game speed is set to 10, but you can change it by passing `-i` argument.
 
 
