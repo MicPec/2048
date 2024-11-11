@@ -18,12 +18,16 @@ Dependencies:
   ```
   git clone https://github.com/MicPec/Grid2048.git
   cd Grid2048
- ```
+  ```
+
 - Install the required dependencies: 
+
   ```
   uv sync
   ```
+
 - Run the game: 
+
   ```
   uv run 2048pygame.py
   ```
